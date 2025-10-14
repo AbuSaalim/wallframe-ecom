@@ -1,20 +1,27 @@
+import { SignJWT } from 'jose';
 import { connectDB } from "@/lib/detabaseConnection";
 import { catchError, ganerateOTP, response } from "@/lib/helperFunction";
 import { sendMail } from "@/lib/sendMail";
-import { zSchema } from "@/lib/zodSchema";
+import { LoginSchema } from "@/lib/zodSchema";
 import { emailVerificationLink } from "@/mail/emailLinkVerification";
 import { otpEmail } from "@/mail/otpEmail";
 import OTPModel from "@/models/Otp.model";
 import UserModel from "@/models/User.model";
 import z from "zod";
-import { id } from "zod/v4/locales";
 
 export async function POST(request) {
   try {
+    console.log('=== LOGIN API STARTED ===');
+    
+    console.log('1. Connecting to DB...');
     await connectDB();
+    console.log('✓ DB Connected');
+    
+    console.log('2. Parsing request...');
     const payload = await request.json();
+    console.log('✓ Payload received:', payload);
 
-    const validationSchema = zSchema
+    const validationSchema = LoginSchema
       .pick({
         email: true,
       })
@@ -22,8 +29,10 @@ export async function POST(request) {
         password: z.string(),
       });
 
+    console.log('3. Validating data...');
     const validatedData = validationSchema.safeParse(payload);
     if (!validatedData.success) {
+      console.log('✗ Validation failed:', validatedData.error);
       return response(
         false,
         401,
@@ -31,18 +40,21 @@ export async function POST(request) {
         validatedData.error
       );
     }
+    console.log('✓ Validation passed');
 
     const { email, password } = validatedData.data;
 
-    // get user data
-
-    const getUser = await UserModel.findOne({ email });
+    console.log('4. Finding user...');
+    const getUser = await UserModel.findOne({ deletedAt:null ,email }).select("+password");
     if (!getUser) {
-      return response(false, 400, "Invalid login Crediantials.");
+      console.log('✗ User not found');
+      return response(false, 400, "Invalid login Credentials.");
     }
+    console.log('✓ User found:', getUser.email);
 
-    // Resent Email Verification Link
+    // Email verification check
     if (!getUser.isEmailVerified) {
+      console.log('5. Email not verified, sending verification link...');
       const secret = new TextEncoder().encode(process.env.SECRET_KEY);
       const token = await new SignJWT({ userId: getUser._id })
         .setIssuedAt()
@@ -53,49 +65,62 @@ export async function POST(request) {
       const verificationLink = `${process.env.NEXT_PUBLIC_BASE_URL}/auth/verify-email/${token}`;
       const emailHTML = emailVerificationLink(verificationLink);
 
-      // Updated: Match your sendMail parameter order (subject, receiver, body)
       const emailResult = await sendMail(
-        "Email Verification - Developer Abu Salim", // subject
-        email, // receiver
-        emailHTML // body
+        "Email Verification - Developer Abu Salim",
+        email,
+        emailHTML
       );
 
       return response(
         false,
         401,
-        "Your email is not verified. we have sent a verification link to your registered email address."
+        "Your email is not verified. We have sent a verification link to your registered email address."
       );
     }
 
-    // Password verification
+    console.log('6. Verifying password...');
     const isPasswordVerified = await getUser.comparePassword(password);
 
     if (!isPasswordVerified) {
-      return response(false, 400, "Invalid login Crediantials.");
+      console.log('✗ Password verification failed');
+      return response(false, 400, "Invalid login Credentials.");
     }
+    console.log('✓ Password verified');
 
-    // otp generation 
+    console.log('7. Deleting old OTPs...');
+    await OTPModel.deleteMany({email});
+    console.log('✓ Old OTPs deleted');
 
-    await OTPModel.deleteMany({email}) // deleting old otp
+    console.log('8. Generating new OTP...');
+    const otp = ganerateOTP();
+    console.log('✓ OTP generated:', otp);
 
-    const otp = ganerateOTP()
-
-    // storing otp into database
+    console.log('9. Saving OTP to database...');
     const newOtpData = new OTPModel({
-        email,otp
-    })
+        email,
+        otp
+    });
+    await newOtpData.save();
+    console.log('✓ OTP saved');
 
-    await newOtpData.save()
-
-    const otpEmailStatus = await sendMail('Your Login Verifivation code', email, otpEmail(otp))
+    console.log('10. Sending OTP email...');
+    const otpEmailStatus = await sendMail('Your Login Verification code', email, otpEmail(otp));
+    console.log('✓ Email sent status:', otpEmailStatus);
 
     if(!otpEmailStatus) {
-        response(false, 400, 'Failed To send Otp.')
+        console.log('✗ Failed to send OTP email');
+        return response(false, 400, 'Failed to send OTP.');
     }
 
-    response(true, 200, 'Plaese verify Your device')
+    console.log('=== LOGIN API SUCCESS ===');
+    return response(true, 200, 'Please verify your device');
 
   } catch (error) {
+    console.error('=== LOGIN API ERROR ===');
+    console.error('Error name:', error.name);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    console.error('Full error:', error);
     return catchError(error);
   }
 }

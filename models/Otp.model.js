@@ -16,8 +16,8 @@ const otpSchema = new mongoose.Schema({
     }
 }, {timestamps:true})
 
-otpSchema.index({expiresAt:1}, {expiresAfterSrconds:0})
+otpSchema.index({expiresAt:1}, {expireAfterSeconds:0})
 
-const OTPModel = mongoose.model.OTP || mongoose.model('OTP', otpSchema,'otps')
+const OTPModel = mongoose.models.OTP || mongoose.model('OTP', otpSchema, 'otps')
 
 export default OTPModel

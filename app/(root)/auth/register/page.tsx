@@ -19,59 +19,58 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import Buttonloading from "@/components/Application/Buttonloading";
-import { z } from "zod";  // Fixed: import { z } instead of import z
+import { z } from "zod";  // Fixed import
 import Link from "next/link";
 import { WEBSITE_LOGIN } from "@/routes/WebsiteRoute";
 import axios from "axios";
-import Error from "next/error";
+import { showToast } from "@/lib/showToast";  
 
 const RegisterPage = () => {
   const [loading, setLoading] = useState(false);
   const [isTypePassword, setIsTypePassword] = useState(true);
 
-  // Fixed: Added commas between properties
   const formSchema = LoginSchema.pick({
-    name: true,      // Added comma
-    email: true,     // Added comma
-    password: true   // Added comma
+    name: true,
+    email: true,
+    password: true,
   }).extend({
     confirmPassword: z.string()
   }).refine((data) => data.password === data.confirmPassword, {
     message: 'Password And Confirmed Password must be Same',
-    path: ['confirmPassword']  // Fixed: "path" not "pasth"
+    path: ['confirmPassword'],
   });
 
-  // Fixed: Use formSchema instead of LoginSchema
   const form = useForm({
-    resolver: zodResolver(formSchema),  // Changed from LoginSchema
+    resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",           // Added comma
-      email: "",          // Added comma
-      password: "",       // Added comma
-      confirmPassword: "" // Fixed
+      name: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
     },
   });
 
   const handleRegisterSubmit = async (values) => {
     console.log(values);
     try {
-      setLoading(true)
-      const {data:registerResponse} = await axios.post('/api/auth/register', values)
+      setLoading(true);
+      const { data: registerResponse } = await axios.post('/api/auth/register', values);
 
-      if(!registerResponse.success) {
-        throw new Error(registerResponse.message)
+      if (!registerResponse.success) {
+        throw new Error(registerResponse.message);
       }
 
       form.reset();
 
-      alert(registerResponse.message)
+      // Fixed: Use string 'success' and proper syntax
+      showToast('success', registerResponse.message);
 
     } catch (error) {
-      alert(error.message)
-    }finally {
-      setLoading(false)
+      // Fixed: Use string 'error', proper variable, and close parenthesis
+      showToast('error', error.message || 'Registration failed');
+    } finally {
+      setLoading(false);
     }
-
   };
 
   return (
@@ -99,16 +98,17 @@ const RegisterPage = () => {
                 onSubmit={form.handleSubmit(handleRegisterSubmit)}
                 className="space-y-8"
               >
+                {/* Rest of your form fields remain the same */}
                 <div className="mb-5">
                   <FormField
                     control={form.control}
-                    name="name"  // Fixed: Changed from "email" to "name"
+                    name="name"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Full name</FormLabel>
                         <FormControl>
                           <Input
-                            type="text"  // Fixed: Changed from "email" to "text"
+                            type="text"
                             placeholder="Abu Salim"
                             {...field}
                           />
@@ -162,7 +162,7 @@ const RegisterPage = () => {
                 <div className="mb-5">
                   <FormField
                     control={form.control}
-                    name="confirmPassword"  // Fixed: Changed from "password" to "confirmPassword"
+                    name="confirmPassword"
                     render={({ field }) => (
                       <FormItem className="relative">
                         <FormLabel>Confirm Password</FormLabel>
