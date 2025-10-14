@@ -22,6 +22,8 @@ import Buttonloading from "@/components/Application/Buttonloading";
 import { z } from "zod";  // Fixed: import { z } instead of import z
 import Link from "next/link";
 import { WEBSITE_LOGIN } from "@/routes/WebsiteRoute";
+import axios from "axios";
+import Error from "next/error";
 
 const RegisterPage = () => {
   const [loading, setLoading] = useState(false);
@@ -52,6 +54,24 @@ const RegisterPage = () => {
 
   const handleRegisterSubmit = async (values) => {
     console.log(values);
+    try {
+      setLoading(true)
+      const {data:registerResponse} = await axios.post('/api/auth/register', values)
+
+      if(!registerResponse.success) {
+        throw new Error(registerResponse.message)
+      }
+
+      form.reset();
+
+      alert(registerResponse.message)
+
+    } catch (error) {
+      alert(error.message)
+    }finally {
+      setLoading(false)
+    }
+
   };
 
   return (
