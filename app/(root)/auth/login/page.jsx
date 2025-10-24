@@ -20,24 +20,34 @@ import { Input } from "@/components/ui/input"
 import Buttonloading from '@/components/Application/Buttonloading'
 import { z } from 'zod'
 import Link from 'next/link'
-import { WEBSITE_REGISTER, WEBSITE_RESETPASSWORD } from '@/routes/WebsiteRoute'
+import { USER_DASHBOARD, WEBSITE_REGISTER, WEBSITE_RESETPASSWORD } from '@/routes/WebsiteRoute'
 import { showToast } from '@/lib/showToast'
 import axios from 'axios'
 import OTPVerification from '@/components/Application/OTPVerification'
 import { useDispatch } from 'react-redux'
 import { login } from '@/store/reducer/authReducer'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { ADMIN_DASHBOARD } from '@/routes/AdminPanelRoute'
+
+// User roles constants for better maintainability
+const USER_ROLES = {
+  ADMIN: 'admin',
+  USER: 'user',
+}
 
 const LoginPage = () => {
   const dispatch = useDispatch()
+  const searchParams = useSearchParams()
+  const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [otpVerificationLoading, setOtpVerificationLoading] = useState(false)
   const [isTypePassword, setIsTypePassword] = useState(true)
-  const [otpEmail, setOtpEmail] = useState('')  // Fixed: typo and default value
+  const [otpEmail, setOtpEmail] = useState('')
 
-  const formSchema = LoginSchema.pick({
-    email: true
-  }).extend({
-    password: z.string().min(3, 'Password must be at least 3 characters')
+  // Improved form schema - more secure and cleaner
+  const formSchema = z.object({
+    email: z.string().email({ message: "Please enter a valid email address." }),
+    password: z.string().min(6, 'Password must be at least 6 characters long.')
   })
 
   const form = useForm({
@@ -51,57 +61,140 @@ const LoginPage = () => {
   const handleLoginSubmit = async (values) => {
     try {
       setLoading(true)
-      const {data: loginResponse} = await axios.post('/api/auth/login', values)
-      
+      const { data: loginResponse } = await axios.post('/api/auth/login', values)
+
       if (!loginResponse.success) {
         throw new Error(loginResponse.message)
       }
-      
+
       setOtpEmail(values.email)
       form.reset()
       showToast('success', loginResponse.message)
-      
+
     } catch (error) {
-      // Fixed: Properly extract axios error message
-      const message = error.response?.data?.message || error.message || 'Login failed'
+      // Show generic error message for security, log detailed error for debugging
+      console.error('Login error:', error)
+      const message = error.response?.data?.message || 'Invalid credentials. Please try again.'
       showToast('error', message)
     } finally {
       setLoading(false)
     }
   }
 
-  
-const handleOtpVerification = async (values) => {
-  try {
-    setOtpVerificationLoading(true);
-    // The API response is stored in 'verifyResponse'
-    const { data: verifyResponse } = await axios.post('/api/auth/verify-otp', values);
-    
-    if (!verifyResponse.success) {
-      // Throw an error to be caught by the catch block
-      throw new Error(verifyResponse.message);
-    }
-    
-    // Show success toast
-    showToast('success', verifyResponse.message);
-    
-    // Reset state
-    setOtpEmail('');
-    
-    // ✅ CORRECTED: Dispatch the login action with the correct data
-    // The user object is inside verifyResponse.data
-    dispatch(login(verifyResponse.data));
-    
-    // You can now redirect the user
-    // router.push('/dashboard');
+  // const handleOtpVerification = async (values) => {
+  //   try {
+  //     setOtpVerificationLoading(true);
+  //     const { data: verifyResponse } = await axios.post('/api/auth/verify-otp', values);
 
-  } catch (error) {
-    const message = error.response?.data?.message || error.message || 'Verification failed';
-    showToast('error', message);
-  } finally {
-    setOtpVerificationLoading(false);
-  }
-};
+  //     if (!verifyResponse.success) {
+  //       throw new Error(verifyResponse.message);
+  //     }
+
+  //     showToast('success', verifyResponse.message);
+  //     setOtpEmail('');
+
+  //     // Extract user object from response - try common locations
+  //     const user = verifyResponse.user || verifyResponse.data?.user || verifyResponse.data;
+
+  //     if (!user || typeof user !== 'object') {
+  //       console.error("User data missing in API response:", verifyResponse);
+  //       showToast('error', 'Authentication failed. Please try again.');
+  //       return; 
+  //     }
+      
+  //     // Debug logging (remove in production)
+  //     console.log("User authenticated:", { role: user.role, email: user.email });
+      
+  //     dispatch(login(user));
+
+  //     // **FIXED REDIRECTION LOGIC**
+  //     const callbackUrl = searchParams.get('callback');
+  //     const userRole = user.role;
+  //     const isAdmin = typeof userRole === 'string' && 
+  //                    userRole.trim().toLowerCase() === USER_ROLES.ADMIN;
+
+  //     // Priority 1: Admin users always go to admin dashboard
+  //     if (isAdmin) {
+  //       console.log("Admin user detected. Redirecting to admin dashboard.");
+  //       router.push(ADMIN_DASHBOARD);
+  //     } 
+  //     // Priority 2: If there's a callback URL and user is not admin
+  //     else if (callbackUrl && !callbackUrl.includes('admin')) {
+  //       console.log(`Non-admin user with callback. Redirecting to: ${callbackUrl}`);
+  //       router.push(callbackUrl);
+  //     } 
+  //     // Priority 3: Default to user dashboard
+  //     else {
+  //       console.log("Regular user. Redirecting to user dashboard.");
+  //       router.push(USER_DASHBOARD);
+  //     }
+
+  //   } catch (error) {
+  //     console.error('OTP verification error:', error);
+  //     const message = error.response?.data?.message || 'Verification failed. Please try again.';
+  //     showToast('error', message);
+  //   } finally {
+  //     setOtpVerificationLoading(false);
+  //   }
+  // };
+
+
+  const handleOtpVerification = async (values) => {
+    try {
+      setOtpVerificationLoading(true);
+      const { data: verifyResponse } = await axios.post('/api/auth/verify-otp', values);
+
+      if (!verifyResponse.success) {
+        throw new Error(verifyResponse.message);
+      }
+
+      showToast('success', verifyResponse.message);
+      setOtpEmail('');
+
+      const user = verifyResponse.user || verifyResponse.data?.user || verifyResponse.data;
+
+      if (!user || typeof user !== 'object') {
+        console.error("CRITICAL: User object not found in API response.", verifyResponse);
+        showToast('error', 'Authentication failed. Please try again.');
+        return; 
+      }
+      
+      dispatch(login(user));
+
+      // --- AGGRESSIVE DEBUGGING ---
+      const userRole = user.role;
+      const callbackUrl = searchParams.get('callback');
+
+      console.log("--- REDIRECT DEBUGGING ---");
+      console.log("User Role from API:", userRole, "(Type: " + typeof userRole + ")");
+      console.log("Callback URL from params:", callbackUrl);
+      
+      const isAdmin = typeof userRole === 'string' && userRole.trim().toLowerCase() === 'admin';
+      console.log("Is Admin?", isAdmin);
+      console.log("--- END DEBUGGING ---");
+
+
+      // **REVISED REDIRECTION LOGIC**
+      if (isAdmin) {
+        console.log("ATTEMPTING REDIRECT: Admin user detected. Forcing navigation to /admin/dashboard.");
+        // Using window.location.href as a more forceful redirect
+        window.location.href = ADMIN_DASHBOARD;
+      } else if (callbackUrl) {
+        console.log(`ATTEMPTING REDIRECT: Non-admin user. Navigating to callback URL: ${callbackUrl}`);
+        router.push(callbackUrl);
+      } else {
+        console.log("ATTEMPTING REDIRECT: Non-admin user, no callback. Navigating to /my-account.");
+        router.push(USER_DASHBOARD);
+      }
+
+    } catch (error) {
+      console.error('OTP verification error:', error);
+      const message = error.response?.data?.message || 'Verification failed. Please try again.';
+      showToast('error', message);
+    } finally {
+      setOtpVerificationLoading(false);
+    }
+  };
 
 
   return (
@@ -109,12 +202,12 @@ const handleOtpVerification = async (values) => {
       <Card className="w-[400px]">
         <CardContent>
           <div className='flex justify-center'>
-            <Image 
-              src={Logo.src} 
-              width={Logo.width} 
-              height={Logo.height} 
-              alt='logo' 
-              className='max-w-[150px]' 
+            <Image
+              src={Logo.src}
+              width={Logo.width}
+              height={Logo.height}
+              alt='logo'
+              className='max-w-[150px]'
             />
           </div>
 
@@ -136,7 +229,12 @@ const handleOtpVerification = async (values) => {
                           <FormItem>
                             <FormLabel>Email</FormLabel>
                             <FormControl>
-                              <Input type="email" placeholder="example@gmail.com" {...field} />
+                              <Input 
+                                type="email" 
+                                placeholder="example@gmail.com" 
+                                {...field} 
+                                disabled={loading}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -152,12 +250,18 @@ const handleOtpVerification = async (values) => {
                           <FormItem className="relative">
                             <FormLabel>Password</FormLabel>
                             <FormControl>
-                              <Input type={isTypePassword ? 'password' : 'text'} placeholder="*************" {...field} />
+                              <Input 
+                                type={isTypePassword ? 'password' : 'text'} 
+                                placeholder="*************" 
+                                {...field}
+                                disabled={loading}
+                              />
                             </FormControl>
-                            <button 
-                              className='absolute top-1/2 right-2 cursor-pointer' 
-                              type='button' 
+                            <button
+                              className='absolute top-1/2 right-2 cursor-pointer'
+                              type='button'
                               onClick={() => setIsTypePassword(!isTypePassword)}
+                              disabled={loading}
                             >
                               {isTypePassword ? <FaRegEyeSlash /> : <FaRegEye />}
                             </button>
@@ -168,17 +272,17 @@ const handleOtpVerification = async (values) => {
                     </div>
 
                     <div className='mb-3'>
-                      <Buttonloading 
-                        loading={loading} 
-                        type="submit" 
-                        text="Login" 
-                        className="w-full cursor-pointer" 
+                      <Buttonloading
+                        loading={loading}
+                        type="submit"
+                        text="Login"
+                        className="w-full cursor-pointer"
                       />
                     </div>
-                    
+
                     <div className="text-center">
                       <div className='flex justify-center items-center gap-1'>
-                        <p className='pt-1'>Don't have Account?</p>
+                        <p className='pt-1'>Don&apos;t have Account?</p>
                         <Link href={WEBSITE_REGISTER} className='text-primary underline'>
                           Create account!
                         </Link>
@@ -194,9 +298,9 @@ const handleOtpVerification = async (values) => {
               </div>
             </>
           ) : (
-            <OTPVerification 
-              email={otpEmail} 
-              onSubmit={handleOtpVerification} 
+            <OTPVerification
+              email={otpEmail}
+              onSubmit={handleOtpVerification}
               loading={otpVerificationLoading}
             />
           )}
@@ -206,4 +310,4 @@ const handleOtpVerification = async (values) => {
   )
 }
 
-export default LoginPage
+export default LoginPage;
