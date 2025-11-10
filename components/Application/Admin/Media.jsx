@@ -65,7 +65,7 @@ const Media = ({media, handleDelete, deleteType, selectedMedia, setSelectedMedia
             ) 
            }
 
-             <DropdownMenuItem className="cursor-pointer" onClick={() => handleDelete(media._id)}> 
+             <DropdownMenuItem className="cursor-pointer" onClick={() => handleDelete([media._id], deleteType)}> 
                 <LuTrash color='red'/> {deleteType === 'SD' ? 'Move Into Trash' : 'Delete Permanently'} 
              </DropdownMenuItem>
           </DropdownMenuContent>

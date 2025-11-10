@@ -5,7 +5,7 @@ import { Card, CardHeader } from '@/@/components/ui/card'
 import BreadCrumb from '@/components/Application/Admin/BreadCrumb'
 import UploadMedia from '@/components/Application/Admin/UploadMedia'
 import { ADMIN_DASHBOARD, ADMIN_MEDIA_SHOW } from '@/routes/AdminPanelRoute'
-import { useInfiniteQuery } from '@tanstack/react-query'
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { CardContent } from '@/components/ui/card'
 import Media from '@/components/Application/Admin/Media'
@@ -14,6 +14,7 @@ import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { Label } from '@radix-ui/react-label'
 import { Checkbox } from '@/components/ui/checkbox'
+import useDeleteMutaion from '@/hooks/useDeleteMutation'
 
 const breadcrumbData = [
     {href: ADMIN_DASHBOARD, label: 'Home'},
@@ -21,6 +22,7 @@ const breadcrumbData = [
 ]
 
 const MediaPage = () => {
+  const queryClick = useQueryClient()
   const [deleteType, setDeleteType] = useState('SD')
   const [selectedMedia, setSelectedMedia] = useState([])
   const [selectAll,setSelectAll]= useState(false)
@@ -40,7 +42,7 @@ const MediaPage = () => {
 
   const fetchMedia = async (page, deleteType) => {
     const {data: response} = await axios.get(`/api/media?page=${page}&limit=10&deleteType=${deleteType}`)
-    console.log(response);
+
     return response
   }
 
@@ -62,17 +64,38 @@ const MediaPage = () => {
     },
   })
 
-  console.log(data);
+
   
 
-  const handleDelete = (selectedMedia, deleteType) => {
+  const deleteMutation = useDeleteMutaion('media-data', '/api/media/delete')
 
+  const handleDelete = (ids, deleteType) => {
+    let c = true
+    if (deleteType === 'PD') {
+      c = confirm('Are you sure you want to delete the data permanently?')
+    }
+    if (c) {
+      deleteMutation.mutate({ids,deleteType})
+    }
+
+    setSelectAll(false)
+    setSelectedMedia([])
   }
 
 
   const handleSelectAll = () => {
-
+      setSelectAll(!selectAll)
   }
+
+  useEffect(() => {
+  if (selectAll) {
+    const ids = data.pages.flatMap(page => page.mediaData.map(media => media._id));
+    setSelectedMedia(ids);
+  } else {
+    setSelectedMedia([]);
+  }
+}, [selectAll, data, setSelectedMedia]);
+
 
   return (
     <div>
@@ -85,7 +108,7 @@ const MediaPage = () => {
               {deleteType === 'SD'? 'Media' : 'Media Trash'}
             </h4>
             <div className="flex items-center gap-5">
-           {deleteType === 'SD' &&    <UploadMedia />}
+           {deleteType === 'SD' &&    <UploadMedia isMultiple={true} queryClick={queryClick} />}
               <div className='flex gap-3'>
                 {deleteType === 'SD' ?
                 <Button type="button" variant="destructive">
@@ -95,7 +118,7 @@ const MediaPage = () => {
 
                 :
 
-              <Button type="button" >
+              <Button type="button"  >
                   <Link href={`${ADMIN_MEDIA_SHOW}`}>
                   Back To Media</Link>
                 </Button>
@@ -113,6 +136,7 @@ const MediaPage = () => {
                       <Checkbox
                         checked={selectAll}
                         onCheckedChange={handleSelectAll}
+                        className="border-primary"
                       />
 
                       selectAll
@@ -120,7 +144,7 @@ const MediaPage = () => {
                     <div className='flex gap-2'>
                       {deleteType === 'SD'
                         ?
-                        <Button variant="destructive" onClick={() => handleDelete(selectedMedia, deleteType)}>
+                        <Button variant="destructive" onClick={() => handleDelete(selectedMedia, deleteType)} className="cursor-pointer">
                           Move Into Trash
                         </Button>
                         :
@@ -143,6 +167,11 @@ const MediaPage = () => {
             status === 'error' ?
             <div className='text-red-500 text-sm'>{error.message}</div>
             :
+
+            <>
+
+            {data.pages.flatMap(page => page.mediaData.map(media => media._id)).length === 0 && <div className='text-left '> Data not found</div>}
+
             <div className='grid lg:grid-cols-5 sm:grid-cols-3 grid-cols-2 gap-2 mb-5'>
               {
                 data?.pages?.map((pages, index) => (
@@ -164,6 +193,7 @@ const MediaPage = () => {
                 ))
               }
             </div>
+            </>
           }
         </CardContent>
       </Card>
