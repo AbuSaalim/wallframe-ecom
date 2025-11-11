@@ -15,6 +15,7 @@ import { useSearchParams } from 'next/navigation'
 import { Label } from '@radix-ui/react-label'
 import { Checkbox } from '@/components/ui/checkbox'
 import useDeleteMutaion from '@/hooks/useDeleteMutation'
+import Buttonloading from '@/components/Application/Buttonloading'
 
 const breadcrumbData = [
     {href: ADMIN_DASHBOARD, label: 'Home'},
@@ -22,7 +23,7 @@ const breadcrumbData = [
 ]
 
 const MediaPage = () => {
-  const queryClick = useQueryClient()
+  const queryClient = useQueryClient()
   const [deleteType, setDeleteType] = useState('SD')
   const [selectedMedia, setSelectedMedia] = useState([])
   const [selectAll,setSelectAll]= useState(false)
@@ -108,7 +109,7 @@ const MediaPage = () => {
               {deleteType === 'SD'? 'Media' : 'Media Trash'}
             </h4>
             <div className="flex items-center gap-5">
-           {deleteType === 'SD' &&    <UploadMedia isMultiple={true} queryClick={queryClick} />}
+           {deleteType === 'SD' &&    <UploadMedia isMultiple={true} queryClient={queryClient} />}
               <div className='flex gap-3'>
                 {deleteType === 'SD' ?
                 <Button type="button" variant="destructive">
@@ -194,6 +195,10 @@ const MediaPage = () => {
               }
             </div>
             </>
+          }
+
+          {hasNextPage && 
+            <Buttonloading type="button" className="cursor-pointer" loading={isFetching} onClick={() => fetchNextPage()}  text="Load More" />
           }
         </CardContent>
       </Card>

@@ -6,7 +6,7 @@ import axios from 'axios';
 import { CldUploadWidget } from 'next-cloudinary';
 import { FaPlus } from 'react-icons/fa';
 
-const UploadMedia = ({ isMultiple = true, queryClick}) => {
+const UploadMedia = ({ isMultiple = true, queryClient}) => {
   const handleOnError = (error) => {
     console.error('Upload error:', error);
     showToast('error', error.statusText || 'Upload failed');
@@ -64,7 +64,7 @@ const UploadMedia = ({ isMultiple = true, queryClick}) => {
         throw new Error(mediaUploadResponse.message);
       }
 
-      queryClick.invaliddateQuaries(['media-data'])
+      queryClient.invaliddateQuaries(['media-data'])
       
       showToast('success', `${uploadedFiles.length} file(s) saved successfully`);
       widget.close(); // Close widget after successful save

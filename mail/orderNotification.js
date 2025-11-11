@@ -210,7 +210,7 @@ export const orderNotification = (data) => {
 																style="width:100%;padding-right:0px;padding-left:0px;">
 																<div align="center" class="alignment">
 																	<div style="max-width: 248px;"><img alt="Logo"
-																			height="auto" src="https://res.cloudinary.com/dicmtamxs/image/upload/v1761680929/wallframe/logo-black_oshawf.webp"
+																			height="auto" src="https://wallframe.vercel.app/logo.png"
 																			style="display: block; height: auto; border: 0; width: 100%;"
 																			title="Logo" width="248" /></div>
 																</div>
