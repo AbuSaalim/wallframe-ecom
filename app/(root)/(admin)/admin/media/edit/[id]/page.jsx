@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, use } from 'react';
 import useFetch from '@/hooks/useFetch';
 import { ADMIN_DASHBOARD, ADMIN_MEDIA_SHOW } from '@/routes/AdminPanelRoute';
 import BreadCrumb from '@/components/Application/Admin/BreadCrumb';
@@ -12,22 +12,21 @@ import { LoginSchema } from '@/lib/zodSchema';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import Image from 'next/image';
+import axios from 'axios';
+import { showToast } from '@/lib/showToast';
 
 const breadcrumbData = [
-  { href: ADMIN_DASHBOARD, label: 'Media' },
+  { href: ADMIN_DASHBOARD, label: 'Dashboard' },
   { href: ADMIN_MEDIA_SHOW, label: 'Media' },
   { href: '', label: 'Edit Media' },
 ];
 
 const EditMedia = ({ params }) => {
-  const { id } = params;
+  const unwrappedParams = use(params);
+  const { id } = unwrappedParams;
 
-  const { data: mediaData, loading, error } = useFetch(`/api/media/get/${id}`);
-
-  // Log mediaData to debug issues
-  useEffect(() => {
-    console.log('Fetched mediaData:', mediaData);
-  }, [mediaData]);
+  const { data: mediaData, loading: fetchingMedia } = useFetch(`/api/media/get/${id}`);
+  const [loading, setLoading] = useState(false);
 
   const formSchema = LoginSchema.pick({
     _id: true,
@@ -38,28 +37,47 @@ const EditMedia = ({ params }) => {
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      _id: mediaData?._id || '',
-      alt: mediaData?.alt || '',
-      title: mediaData?.title || '',
+      _id: '',
+      alt: '',
+      title: '',
     },
   });
 
-  const [submitting, setSubmitting] = useState(false);
+  useEffect(() => {
+    if (mediaData && mediaData.success) {
+      const data = mediaData.data;
+      form.reset({
+        _id: data._id || '',
+        alt: data.alt || '',
+        title: data.title || '',
+      });
+    }
+  }, [mediaData, form]);
 
-  const handleOnSubmit = async (values) => {
+  const onSubmit = async (values) => {
     try {
-      setSubmitting(true);
-      // API call to update media (example)
-      // await axios.put('/api/media/update', values);
+      setLoading(true);
+      const { data: response } = await axios.put('/api/media/update', values);
+
+      if (!response.success) {
+        throw new Error(response.message);
+      }
+
+      showToast('success', response.message);
     } catch (error) {
-      console.error('Update failed:', error);
+      showToast('error', error?.response?.data?.message || error.message);
     } finally {
-      setSubmitting(false);
+      setLoading(false);
     }
   };
 
-  if (loading) return <p>Loading media data...</p>;
-  if (error) return <p className="text-red-500">Error loading media: {error}</p>;
+  if (fetchingMedia) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p>Loading media data...</p>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -68,58 +86,71 @@ const EditMedia = ({ params }) => {
         <CardHeader className="px-3 py-3 border-b border-border">
           <h4 className="text-xl font-semibold">Edit Media</h4>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleOnSubmit)} className="space-y-8">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              {mediaData?.data?.secure_url ? (
+                <div className="mb-5">
+                  <Image
+                    src={mediaData.data.secure_url}
+                    alt={mediaData.data.alt || 'Media image'}
+                    width={200}
+                    height={200}
+                    style={{ width: '200px', height: 'auto' }}
+                    priority
+                    className="rounded-md"
+                  />
+                </div>
+              ) : (
+                <p className="text-gray-500">No image URL found.</p>
+              )}
 
-            {mediaData?.data?.secure_url ? (
-  <Image
-    src={mediaData.data.secure_url}
-    alt={mediaData.data.alt || 'Media image'}
-    width={200}
-    height={200}
-  />
-) : (
-  <p>No image URL found.</p>
-)}
+              <FormField
+                control={form.control}
+                name="alt"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Alt Text</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="text"
+                        placeholder="Enter alt text"
+                        {...field}
+                        disabled={loading}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
+              <FormField
+                control={form.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Title</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="text"
+                        placeholder="Enter title"
+                        {...field}
+                        disabled={loading}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-              <div className="mb-5">
-                <FormField
-                  control={form.control}
-                  name="alt"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Alt</FormLabel>
-                      <FormControl>
-                        <Input type="text" placeholder="Enter alt text" {...field} disabled={submitting} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+              <div className="pt-4">
+                <Buttonloading
+                  loading={loading}
+                  type="submit"
+                  text="Update Media"
+                  className="cursor-pointer"
                 />
               </div>
-
-              <div className="mb-5">
-                <FormField
-                  control={form.control}
-                  name="title"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Title</FormLabel>
-                      <FormControl>
-                        <Input type="text" placeholder="Enter title" {...field} disabled={submitting} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div className="mb-3">
-                <Buttonloading loading={submitting} type="submit" text="Update Media" className="cursor-pointer" />
-              </div>
-
             </form>
           </Form>
         </CardContent>
