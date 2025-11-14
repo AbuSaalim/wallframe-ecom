@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from '@/components/ui/card'
 import React, { useState } from 'react'
-import Logo from '@/public/assets/images/logo-black.png'
+import Logo from '@/public/assets/images/logo.png'
 import Image from 'next/image'
 import { zodResolver } from "@hookform/resolvers/zod"
 import { LoginSchema } from "@/lib/zodSchema"
@@ -204,8 +204,8 @@ const LoginPage = () => {
           <div className='flex justify-center'>
             <Image
               src={Logo.src}
-              width={Logo.width}
-              height={Logo.height}
+              width={300}
+              height={300}
               alt='logo'
               className='max-w-[150px]'
             />

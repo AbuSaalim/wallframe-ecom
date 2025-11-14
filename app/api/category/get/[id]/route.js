@@ -1,35 +1,34 @@
 import { isAuthenticated } from "@/lib/authentication";
 import { connectDB } from "@/lib/detabaseConnection";
 import { catchError, response } from "@/lib/helperFunction";
-import MediaModel from "@/models/Media.model";
+import CategoryModel from "@/models/Category.model";
 import { isValidObjectId } from "mongoose";
 
 export async function GET(request, { params }) {
   try {
     const auth = await isAuthenticated('admin');
-    
     if (!auth.isAuth) {
-      return response(false, 403, 'Unauthorised');
+      return response(false, 403, 'Unauthorized.');
     }
 
     await connectDB();
 
-    const id = params.id;
+    const { id } = await params;
 
     if (!isValidObjectId(id)) {
-      return response(false, 400, 'Invalid object id.');
+      return response(false, 400, 'Invalid category ID.');
     }
 
-    const media = await MediaModel.findOne({ _id: id, deletedAt: null }).lean();
+    const category = await CategoryModel.findOne({ _id: id, deletedAt: null });
 
-    if (!media) {
-      return response(false, 404, 'Media not found.');
+    if (!category) {
+      return response(false, 404, 'Category not found.');
     }
 
-    return response(true, 200, 'Media found.', media);
-    
+    return response(true, 200, 'Category found.', category);
+
   } catch (error) {
-    console.error('API GET error:', error);
+    console.error('GET /api/category/get/[id] error:', error);
     return catchError(error);
   }
 }

@@ -22,7 +22,7 @@ const BreadCrumb = ({ breadcrumbData }) => {
                   {isLast ? (
                     <BreadcrumbPage>{data.label}</BreadcrumbPage>
                   ) : (
-                    <BreadcrumbLink href={data.href}>
+                    <BreadcrumbLink className="font-semibold" href={data.href}>
                       {data.label}
                     </BreadcrumbLink>
                   )}

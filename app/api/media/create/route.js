@@ -1,7 +1,8 @@
 import { v2 as cloudinary } from 'cloudinary';
 import { connectDB } from "@/lib/detabaseConnection";
-import { catchError, isAuthenticated, response } from "@/lib/helperFunction";
+import { catchError, response } from "@/lib/helperFunction";
 import MediaModel from "@/models/Media.model";
+import { isAuthenticated } from '@/lib/authentication';
 
 // Configure Cloudinary
 cloudinary.config({

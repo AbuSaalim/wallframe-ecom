@@ -1,6 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';  // ✅ Add this import
+import { useRouter } from 'next/navigation';  // ✅ Add this import
 import BreadCrumb from '@/components/Application/Admin/BreadCrumb'
 import { ADMIN_CATEGORY_SHOW, ADMIN_DASHBOARD } from '@/routes/AdminPanelRoute'
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
@@ -25,15 +27,17 @@ const slugify = (text) => {
     .toString()
     .toLowerCase()
     .trim()
-    .replace(/\s+/g, '-')        // Replace spaces with -
-    .replace(/[^\w\-]+/g, '')    // Remove all non-word chars
-    .replace(/\-\-+/g, '-')      // Replace multiple - with single -
-    .replace(/^-+/, '')          // Trim - from start of text
-    .replace(/-+$/, '');         // Trim - from end of text
+    .replace(/\s+/g, '-')
+    .replace(/[^\w\-]+/g, '')
+    .replace(/\-\-+/g, '-')
+    .replace(/^-+/, '')
+    .replace(/-+$/, '');
 }
 
 const AddCategory = () => {
   const [loading, setLoading] = useState(false);
+  const queryClient = useQueryClient();  // ✅ Add this
+  const router = useRouter();  // ✅ Add this
 
   const formSchema = LoginSchema.pick({
     name: true,
@@ -62,19 +66,25 @@ const AddCategory = () => {
     try {
       setLoading(true);
 
-      const {data:response} = await axios.post('/api/category/create',values)
+      const { data: response } = await axios.post('/api/category/create', values)
 
       if (!response.success) {
         throw new Error(response.message)
       }
 
-      form.reset()
-      showToast('success', response.message)
+      // ✅ Invalidate the category query cache
+      queryClient.invalidateQueries({ queryKey: ['category-data'] });
 
-      console.log(values);
+      form.reset();
+      showToast('success', response.message);
+
+      // ✅ Optional: Redirect to category list page
+      setTimeout(() => {
+        router.push(ADMIN_CATEGORY_SHOW);
+      }, 1000);
+
     } catch (error) {
-      showToast('error:', error.message);
-      // showToast('error', error.message);
+      showToast('error', error?.response?.data?.message || error.message);
     } finally {
       setLoading(false);
     }

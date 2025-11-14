@@ -1,9 +1,8 @@
+import { isAuthenticated } from "@/lib/authentication";
 import { connectDB } from "@/lib/detabaseConnection";
 import { catchError, response } from "@/lib/helperFunction";
-import MediaModel from "@/models/Media.model";
-import cloudinary from "@/lib/cloudinary";
+import CategoryModel from "@/models/Category.model";
 import mongoose from "mongoose";
-import { isAuthenticated } from "@/lib/authentication";
 
 export async function PUT(request) {
     try {
@@ -20,8 +19,8 @@ export async function PUT(request) {
             return response(false, 400, 'Invalid or empty id list.')
         }
 
-        const media = await MediaModel.find({ _id: { $in: ids }}).lean()
-        if (!media.length) {
+        const category = await CategoryModel.find({ _id: { $in: ids }}).lean()
+        if (!category.length) {
             return response(false, 404, 'Data not Found')
         }
 
@@ -30,9 +29,9 @@ export async function PUT(request) {
         }
 
         if (deleteType === 'SD') {
-            await MediaModel.updateMany({ _id: { $in: ids } }, { $set: { deletedAt: new Date().toISOString() }}) 
+            await CategoryModel.updateMany({ _id: { $in: ids } }, { $set: { deletedAt: new Date().toISOString() }}) 
         } else {
-            await MediaModel.updateMany({ _id: { $in: ids } }, { $set: { deletedAt: null }}) 
+            await CategoryModel.updateMany({ _id: { $in: ids } }, { $set: { deletedAt: null }}) 
         }
 
         return response(true, 200, deleteType === 'SD'? 'Data moved into trash.' : 'Data restored.')
@@ -41,8 +40,7 @@ export async function PUT(request) {
     }
 }
 export async function DELETE(request) {
-  const session = await mongoose.startSession();
-  session.startTransaction();
+
 
   try {
     const auth = await isAuthenticated('admin');
@@ -59,8 +57,8 @@ export async function DELETE(request) {
       return response(false, 400, 'Invalid or empty id list.');
     }
 
-    const media = await MediaModel.find({ _id: { $in: ids } }).session(session).lean();
-    if (!media.length) {
+    const category = await CategoryModel.find({ _id: { $in: ids } }).lean();
+    if (!category.length) {
       return response(false, 404, 'Data not Found');
     }
 
@@ -68,29 +66,13 @@ export async function DELETE(request) {
       return response(false, 404, 'Invalid Delete Operation. Delete type Should be PD for this route.');
     }
 
-    await MediaModel.deleteMany({ _id: { $in: ids } }).session(session);
+    await CategoryModel.deleteMany({ _id: { $in: ids } });
 
-    // Delete media from Cloudinary safely
-    const publicIds = media.map(m => m.public_id).filter(Boolean);
 
-    if (publicIds.length > 0) {
-      try {
-        await cloudinary.api.delete_resources(publicIds);
-      } catch (error) {
-        console.error('Cloudinary deletion failed:', error);
-        if (session.inTransaction()) await session.abortTransaction();
-        throw error;
-      }
-    }
-
-    await session.commitTransaction();
     return response(true, 200, 'Data Deleted Permanently.');
   } catch (error) {
-    console.error('Delete route error:', error);
-    if (session.inTransaction()) await session.abortTransaction();
+  
     return catchError(error);
-  } finally {
-    session.endSession();
-  }
+  } 
 }
 
