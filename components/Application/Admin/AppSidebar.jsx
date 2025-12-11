@@ -11,8 +11,8 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import Image from "next/image"
-import logoBlack from '@/public/assets/images/logo-black.png'
-import logoWhite from '@/public/assets/images/logo-white.png'
+import logoBlack from '@/public/assets/images/logo.png'
+import logoWhite from '@/public/assets/images/logo.png'
 import { Button } from "@/components/ui/button"
 import { LuChevronRight } from "react-icons/lu";
 import { IoMdClose } from "react-icons/io";
