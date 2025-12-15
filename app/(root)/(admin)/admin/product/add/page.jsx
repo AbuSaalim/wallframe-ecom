@@ -91,9 +91,9 @@ const [selectedMedia, setSelectedMedia] = useState([])
       name: "",
       slug: "",
       category: "",
-      mrp: "",
-      sellingPrice: "",
-      discountPercentage: "",
+      mrp: 0,
+      sellingPrice: 0,
+      discountPercentage: 0,
       description: "",
     },
   });
@@ -108,6 +108,21 @@ const [selectedMedia, setSelectedMedia] = useState([])
     return () => subscription.unsubscribe();
   }, [form]);
 
+  // discount percentage calculator
+  useEffect(() => {
+    const mrp = form.getValues('mrp') || 0
+    const sellingPrice = form.getValues('sellingPrice') || 0
+
+    if (mrp > 0 && sellingPrice > 0) {
+      
+      const discountPercentage = ((mrp - sellingPrice) / mrp) * 100
+      form.setValue('discountPercentage', Math.round(discountPercentage))
+    }
+
+
+  }, [form.watch('mrp'), form.watch('sellingPrice')])
+
+
   const editor = (event , editor) => {
     const data = editor.getData()
     form.setValue('description', data)
@@ -117,9 +132,16 @@ const [selectedMedia, setSelectedMedia] = useState([])
     try {
       setLoading(true);
 
+      if (selectedMedia.length <=0 ) {
+          return showToast('error', 'Please select media.')
+      }
+
+      const mediaIds = selectedMedia.map(media => media._id)
+      values.media = mediaIds
+
       const { data: response } = await axios.post(
         "/api/product/create",
-        values
+        (values)
       );
 
       if (!response.success) {
@@ -288,6 +310,7 @@ const [selectedMedia, setSelectedMedia] = useState([])
                         <FormControl>
                           <Input
                             type="number"
+                            readOnly
                             placeholder="Enter Discount Percentage"
                             {...field}
                             disabled={loading}
