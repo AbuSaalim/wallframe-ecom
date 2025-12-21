@@ -1,7 +1,8 @@
 import { isAuthenticated } from "@/lib/authentication";
 import { connectDB } from "@/lib/detabaseConnection";
 import { catchError, response } from "@/lib/helperFunction";
-import CategoryModel from "@/models/Category.model";
+import ProductModel from "@/models/Product.model";
+
 
 
 export async function GET(request) {
@@ -17,13 +18,13 @@ export async function GET(request) {
         deletedAt: null
     }
 
-    const getCategory = await CategoryModel.find(filter).sort({createdAt:-1}).lean()
+    const getProduct = await ProductModel.find(filter).select('-media -description').sort({createdAt:-1}).lean()
 
-    if (!getCategory) {
+    if (!getProduct) {
           return response(false, 404, 'Collection empty.');
     }
 
-    return response(true, 200, 'Data found.', getCategory);
+    return response(true, 200, 'Data found.', getProduct);
 
   } catch (error) {
     console.error('GET /api/category/get/[id] error:', error);

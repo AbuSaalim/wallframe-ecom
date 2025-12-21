@@ -1,7 +1,7 @@
 import { isAuthenticated } from "@/lib/authentication";
 import { connectDB } from "@/lib/detabaseConnection";
 import { catchError, response } from "@/lib/helperFunction";
-import CategoryModel from "@/models/Category.model";
+import ProductModel from "@/models/Product.model";
 import { isValidObjectId } from "mongoose";
 
 export async function GET(request, { params }) {
@@ -12,23 +12,28 @@ export async function GET(request, { params }) {
     }
 
     await connectDB();
-
     const { id } = await params;
 
+    console.log('🔍 Fetching product with ID:', id);
+
     if (!isValidObjectId(id)) {
-      return response(false, 400, 'Invalid category ID.');
+      return response(false, 400, 'Invalid product ID.');
     }
 
-    const category = await CategoryModel.findOne({ _id: id, deletedAt: null });
+    const getProduct = await ProductModel.findOne({ _id: id, deletedAt: null })
+      .populate('category', 'name _id')
+      .populate('media', 'secure_url _id alt');
 
-    if (!category) {
-      return response(false, 404, 'Category not found.');
+    console.log('📦 Found product:', getProduct);
+
+    if (!getProduct) {
+      return response(false, 404, 'Product not found.');
     }
 
-    return response(true, 200, 'Category found.', category);
+    return response(true, 200, 'Product found.', getProduct);
 
   } catch (error) {
-    console.error('GET /api/category/get/[id] error:', error);
+    console.error('GET /api/product/get/[id] error:', error);
     return catchError(error);
   }
 }

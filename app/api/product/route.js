@@ -20,57 +20,118 @@ export async function GET(request) {
     const start = parseInt(searchParams.get('start') || '0', 10);
     const size = parseInt(searchParams.get('size') || '10', 10);
     const filters = JSON.parse(searchParams.get('filters') || '[]');
-    const globalFilter = searchParams.get('globalFilter') || '';  // ✅ Fixed typo: globalfilters → globalFilter
+    const globalFilter = searchParams.get('globalFilter') || '';
     const sorting = JSON.parse(searchParams.get('sorting') || '[]');
     const deleteType = searchParams.get('deleteType');
 
-    // Build Match Query
+    // Build Match Query for products (before lookup)
     let matchQuery = {};
 
     if (deleteType === 'SD') {
-      matchQuery = { deletedAt: null };
+      matchQuery.deletedAt = null;
     } else if (deleteType === 'PD') {
-      matchQuery = { deletedAt: { $ne: null } };
+      matchQuery.deletedAt = { $ne: null };
     } else {
-      // Default: show non-deleted items
-      matchQuery = { deletedAt: null };
+      matchQuery.deletedAt = null;
     }
 
-    // Global search
-    if (globalFilter) {
-      matchQuery['$or'] = [
-        { name: { $regex: globalFilter, $options: 'i' } },
-        { slug: { $regex: globalFilter, $options: 'i' } },
-      ];
-    }
+    // Numeric fields that need special handling
+    const numericFields = ['mrp', 'sellingPrice', 'discountPercentage'];
 
-    // Column filtration
+    // Column filtration (before lookup)
     filters.forEach(filter => {
-      matchQuery[filter.id] = { $regex: filter.value, $options: 'i' };  // ✅ Fixed syntax error
+      if (filter.id && filter.value) {
+        if (filter.id === 'category') {
+          // Skip category - will handle after lookup
+          return;
+        }
+        
+        if (numericFields.includes(filter.id)) {
+          // For numeric fields, try exact match or range
+          const numValue = parseFloat(filter.value);
+          if (!isNaN(numValue)) {
+            matchQuery[filter.id] = numValue;
+          }
+        } else {
+          // String fields - use regex
+          matchQuery[filter.id] = { $regex: filter.value, $options: 'i' };
+        }
+      }
     });
 
     // Sorting
     let sortQuery = {};
     sorting.forEach(sort => {
-      sortQuery[sort.id] = sort.desc ? -1 : 1;
+      if (sort.id) {
+        sortQuery[sort.id] = sort.desc ? -1 : 1;
+      }
     });
+
+    console.log('Initial Match Query:', JSON.stringify(matchQuery, null, 2));
 
     // Aggregate pipeline
     const aggregatePipeline = [
+      { $match: matchQuery },
+      // Add string versions of numeric fields for searching
       {
-        $lookup:{
-          from:'categories',
-          localFeild:'category',
-          foreignFeild:'_id',
-          as:'categoryData'
+        $addFields: {
+          mrpString: { $toString: "$mrp" },
+          sellingPriceString: { $toString: "$sellingPrice" },
+          discountPercentageString: { $toString: "$discountPercentage" }
+        }
+      },
+      {
+        $lookup: {
+          from: 'categories',
+          localField: 'category',
+          foreignField: '_id',
+          as: 'categoryData'
         }
       },
       {
         $unwind: {
-          path: "$categoryData", preserveNullAndEmptyArrays: true
+          path: "$categoryData",
+          preserveNullAndEmptyArrays: true
         }
-      },
-      { $match: matchQuery },
+      }
+    ];
+
+    // Build post-lookup match conditions
+    let postLookupConditions = [];
+
+    // Category filter
+    const categoryFilter = filters.find(f => f.id === 'category');
+    if (categoryFilter && categoryFilter.value) {
+      postLookupConditions.push({
+        'categoryData.name': { $regex: categoryFilter.value, $options: 'i' }
+      });
+    }
+
+    // Global filter with string fields
+    if (globalFilter && globalFilter.trim() !== '') {
+      postLookupConditions.push({
+        $or: [
+          { name: { $regex: globalFilter, $options: 'i' } },
+          { slug: { $regex: globalFilter, $options: 'i' } },
+          { mrpString: { $regex: globalFilter, $options: 'i' } },
+          { sellingPriceString: { $regex: globalFilter, $options: 'i' } },
+          { discountPercentageString: { $regex: globalFilter, $options: 'i' } },
+          { 'categoryData.name': { $regex: globalFilter, $options: 'i' } }
+        ]
+      });
+    }
+
+    // Add post-lookup match if conditions exist
+    if (postLookupConditions.length > 0) {
+      aggregatePipeline.push({
+        $match: postLookupConditions.length === 1 
+          ? postLookupConditions[0] 
+          : { $and: postLookupConditions }
+      });
+    }
+
+    // Add sorting, skip, limit, and projection
+    aggregatePipeline.push(
       { $sort: Object.keys(sortQuery).length ? sortQuery : { createdAt: -1 } },
       { $skip: start },
       { $limit: size },
@@ -81,29 +142,68 @@ export async function GET(request) {
           slug: 1,
           mrp: 1,
           sellingPrice: 1,
-          descountPercentage: 1,
+          discountPercentage: 1,
           category: "$categoryData.name",
           createdAt: 1,
           updatedAt: 1,
           deletedAt: 1
         }
       }
-    ];
+    );
+
+    console.log('Full Pipeline:', JSON.stringify(aggregatePipeline, null, 2));
 
     // Execute Query
     const getProduct = await ProductModel.aggregate(aggregatePipeline);
 
-    // Get totalRowCount
-    const totalRowCount = await ProductModel.countDocuments(matchQuery);
+    // Count pipeline
+    const countPipeline = [
+      { $match: matchQuery },
+      {
+        $addFields: {
+          mrpString: { $toString: "$mrp" },
+          sellingPriceString: { $toString: "$sellingPrice" },
+          discountPercentageString: { $toString: "$discountPercentage" }
+        }
+      },
+      {
+        $lookup: {
+          from: 'categories',
+          localField: 'category',
+          foreignField: '_id',
+          as: 'categoryData'
+        }
+      },
+      {
+        $unwind: {
+          path: "$categoryData",
+          preserveNullAndEmptyArrays: true
+        }
+      }
+    ];
+
+    if (postLookupConditions.length > 0) {
+      countPipeline.push({
+        $match: postLookupConditions.length === 1 
+          ? postLookupConditions[0] 
+          : { $and: postLookupConditions }
+      });
+    }
+
+    countPipeline.push({ $count: "total" });
+
+    const countResult = await ProductModel.aggregate(countPipeline);
+    const totalRowCount = countResult.length > 0 ? countResult[0].total : 0;
 
     return NextResponse.json({
-      success: true,  // ✅ Added success flag
+      success: true,
       data: getProduct,
       meta: { totalRowCount }
     });
 
   } catch (error) {
-    console.error('GET /api/category error:', error);
+    console.error('GET /api/product error:', error);
+    console.error('Error stack:', error.stack);
     return catchError(error);
   }
 }
