@@ -54,7 +54,7 @@ const slugify = (text) => {
 const AddProduct = () => {
   const [loading, setLoading] = useState(false);
   const [categoryOption, setCategoryOption] = useState([]);
-  const { data: getCategory } = useFetch("/api/category");
+  const { data: getCategory } = useFetch("/api/category?deleteType=SD&&size=10000");
 
 // media modal state
 

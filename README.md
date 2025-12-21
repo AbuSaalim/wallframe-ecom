@@ -38,7 +38,6 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 
 <!-- 12345!@#as -->
 
-659
 
 
 
@@ -381,3 +380,7 @@ const AddProduct = () => {
 };
 
 export default AddProduct;
+
+
+
+8: 42 mint

@@ -3,6 +3,7 @@ import { connectDB } from "@/lib/detabaseConnection";
 import { catchError, response } from "@/lib/helperFunction";
 import { LoginSchema } from "@/lib/zodSchema";
 import ProductModel from "@/models/Product.model";
+import { encode } from "entities";
 
 export async function POST(request) {
   try {
@@ -46,7 +47,7 @@ export async function POST(request) {
       mrp: productData.mrp,
       sellingPrice: productData.sellingPrice,
       discountPercentage: productData.discountPercentage,
-      description: productData.description,
+      description: encode(productData.description),
       media: productData.media,
     });
     await newProduct.save();

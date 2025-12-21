@@ -15,5 +15,9 @@ export const ADMIN_PRODUCT_SHOW = '/admin/product'
 export const ADMIN_PRODUCT_EDIT = (id) => id ? `/admin/product/edit/${id}` : ``  
 
 
+// PRODUCT Variant Routes
+export const ADMIN_PRODUCT_VARIANT_ADD = '/admin/product-variant/add' 
+export const ADMIN_PRODUCT_VARIANT_SHOW = '/admin/product-variant' 
+export const ADMIN_PRODUCT_VARIANT_EDIT = (id) => id ? `/admin/product-variant/edit/${id}` : ``  
 // Trash route
 export const ADMIN_TRASH = '/admin/trash'
