@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { ADMIN_DASHBOARD, ADMIN_TRASH } from "@/routes/AdminPanelRoute"
 import DataTableWrapper from "@/components/Application/Admin/DataTableWrapper"
 import { useCallback, useMemo } from "react"
-import { DT_CATEGORY_COLUMN, DT_PRODUCT_COLUMN, DT_PRODUCT_VARIANT_COLUMN } from "@/lib/column"
+import { DT_CATEGORY_COLUMN, DT_COUPON_COLUMN, DT_PRODUCT_COLUMN, DT_PRODUCT_VARIANT_COLUMN } from "@/lib/column"
 import DeleteAction from "@/components/Application/Admin/DeleteAction"
 import { useSearchParams } from "next/navigation"
 import { columnConfig } from "@/lib/helperFunction"
@@ -36,6 +36,13 @@ const TRASH_CONFIG = {
     fetchUrl: '/api/product-variant',
     exportUrl: '/api/product-variant/export',
     deleteUrl: '/api/product-variant/delete'
+  },
+  coupon: {
+    title: 'Coupon Trash',
+    columns: DT_COUPON_COLUMN,
+    fetchUrl: '/api/coupon',
+    exportUrl: '/api/coupon/export',
+    deleteUrl: '/api/coupon/delete'
   },
 
 }
