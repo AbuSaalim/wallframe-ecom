@@ -1,17 +1,10 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": ".next",
-  "env": {
-    "MONGODB_URL": "@MONGODB_URL",
-    "SECRET_KEY": "@SECRET_KEY",
-    "CLOUDINARY_CLOUD_NAME": "@CLOUDINARY_CLOUD_NAME",
-    "CLOUDINARY_API_KEY": "@CLOUDINARY_API_KEY",
-    "CLOUDINARY_API_SECRET": "@CLOUDINARY_API_SECRET",
-    "SMTP_HOST": "@SMTP_HOST",
-    "SMTP_USER": "@SMTP_USER",
-    "SMTP_PASSWORD": "@SMTP_PASSWORD",
-    "NEXT_PUBLIC_API_URL": "@NEXT_PUBLIC_API_URL"
-  },
+  // Environment variables should be set via the Vercel Dashboard or CLI.
+  // Remove this "env" mapping if you prefer to manage variables in the
+  // Vercel Project Settings (recommended). If you use Vercel Secrets,
+  // create them and reference with "@NAME" here.
   "functions": {
     "app/api/**/*.js": {
       "maxDuration": 30
