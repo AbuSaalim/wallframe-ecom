@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, Fragment, useEffect } from 'react'
-import { Card, CardHeader } from '@/@/components/ui/card'
+import { Card, CardHeader } from '@/components/ui/card'
 import BreadCrumb from '@/components/Application/Admin/BreadCrumb'
 import UploadMedia from '@/components/Application/Admin/UploadMedia'
 import { ADMIN_DASHBOARD, ADMIN_MEDIA_SHOW } from '@/routes/AdminPanelRoute'

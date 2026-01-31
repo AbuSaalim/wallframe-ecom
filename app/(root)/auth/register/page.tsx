@@ -75,8 +75,8 @@ const RegisterPage = () => {
 
   return (
     <div>
-      <Card>
-        <CardContent>
+      <Card className="">
+        <CardContent className="">
           <div className="flex justify-center">
             <Image
               src={Logo.src}
@@ -104,7 +104,7 @@ const RegisterPage = () => {
                     control={form.control}
                     name="name"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="">
                         <FormLabel>Full name</FormLabel>
                         <FormControl>
                           <Input
@@ -124,7 +124,7 @@ const RegisterPage = () => {
                     control={form.control}
                     name="email"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="">
                         <FormLabel>Email</FormLabel>
                         <FormControl>
                           <Input
