@@ -5,11 +5,12 @@ import ProductModel from "@/models/Product.model";
 import { NextResponse } from "next/server";
 export async function GET(request) {
   try {
-    // Check authentication
-    const auth = await isAuthenticated('admin');
-    if (!auth.isAuth) {
-      return response(false, 403, 'Unauthorized.');
-    }
+    // Step 1: Verify Firebase token and check admin role
+    const auth = await authMiddleware(request, { requireAdmin: true });
+    if (auth.isError) return auth.response;
+    // If we reach here, user is authenticated and admin verified ✅
+
+    // Step 2: Connect to database
     await connectDB();
     const searchParams = request.nextUrl.searchParams;
     // Extract query parameters
