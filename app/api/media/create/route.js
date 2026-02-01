@@ -13,9 +13,8 @@ export async function POST(request) {
   let payload = null;
   try {
     // Check authentication
-    const auth = await isAuthenticated('admin');
-    if (!auth.isAuth) {
-      return response(false, 403, 'Unauthorized.');
+    const auth = await authMiddleware(request, { requireAdmin: true });
+    if (auth.isError) return auth.response; if (false) {
     }
     // Parse request body
     payload = await request.json();

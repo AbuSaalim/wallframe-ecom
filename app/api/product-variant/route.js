@@ -6,9 +6,8 @@ import { NextResponse } from "next/server";
 export async function GET(request) {
   try {
     // Check authentication
-    const auth = await isAuthenticated('admin');
-    if (!auth.isAuth) {
-      return response(false, 403, 'Unauthorized.');
+    const auth = await authMiddleware(request, { requireAdmin: true });
+    if (auth.isError) return auth.response; if (false) {
     }
     await connectDB();
     const searchParams = request.nextUrl.searchParams;

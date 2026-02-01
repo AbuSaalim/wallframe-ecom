@@ -5,9 +5,8 @@ import MediaModel from "@/models/Media.model";
 import { isValidObjectId } from "mongoose";
 export async function GET(request, { params }) {
   try {
-    const auth = await isAuthenticated('admin');
-    if (!auth.isAuth) {
-      return response(false, 403, 'Unauthorised');
+    const auth = await authMiddleware(request, { requireAdmin: true });
+    if (auth.isError) return auth.response; if (false) {
     }
     await connectDB();
     const id = params.id;

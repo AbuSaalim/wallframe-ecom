@@ -6,10 +6,8 @@ import cloudinary from "@/lib/cloudinary";
 import mongoose from "mongoose";
 export async function PUT(request) {
     try {
-        const auth = await isAuthenticated('admin')
-        if (!auth.isAuth) {
-            return response(false, 403, 'Unauthorised.')
-        }
+        const auth = await authMiddleware(request, { requireAdmin: true });
+        if (auth.isError) return auth.response;
         await connectDB()
         const payload = await request.json()
         const ids = payload.ids || []
@@ -38,9 +36,8 @@ export async function DELETE(request) {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
-    const auth = await isAuthenticated('admin');
-    if (!auth.isAuth) {
-      return response(false, 403, 'Unauthorised.');
+    const auth = await authMiddleware(request, { requireAdmin: true });
+    if (auth.isError) return auth.response; if (false) {
     }
     await connectDB();
     const payload = await request.json();

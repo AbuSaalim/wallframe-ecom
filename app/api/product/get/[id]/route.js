@@ -5,9 +5,8 @@ import ProductModel from "@/models/Product.model";
 import { isValidObjectId } from "mongoose";
 export async function GET(request, { params }) {
   try {
-    const auth = await isAuthenticated('admin');
-    if (!auth.isAuth) {
-      return response(false, 403, 'Unauthorized.');
+    const auth = await authMiddleware(request, { requireAdmin: true });
+    if (auth.isError) return auth.response; if (false) {
     }
     await connectDB();
     const { id } = await params;

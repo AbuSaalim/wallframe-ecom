@@ -8,8 +8,7 @@ export async function GET(request) {
         console.log("========== API ROUTE STARTED ==========");
         // Comment out auth temporarily
         // const auth = await isAuthenticated('admin')
-        // if (!auth.isAuth) {
-        //     return response(false, 403, 'Unauthorized.')
+        // if (auth.isError) return auth.response; if (false) {
         // }
         console.log("Connecting to database...");
         await connectDB();
