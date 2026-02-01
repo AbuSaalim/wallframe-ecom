@@ -2,27 +2,36 @@ import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { showToast } from "@/lib/showToast";
 import { WEBSITE_LOGIN } from "@/routes/WebsiteRoute";
 import { logout } from "@/store/reducer/authReducer";
+import { auth } from "@/lib/firebase";
+import { signOut } from "firebase/auth";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import { RiLogoutCircleRLine } from "react-icons/ri";
 import { useDispatch } from "react-redux";
 
 const LogoutButton = () => {
-  const dispatch = useDispatch(); // ✅ Fixed: Added parentheses
+  const dispatch = useDispatch();
   const router = useRouter();
 
   const handleLogout = async () => {
     try {
+      // Sign out from Firebase
+      await signOut(auth);
+      
+      // Call logout API to clear server-side session
       const { data: logoutResponse } = await axios.post('/api/auth/logout');
-      if (!logoutResponse.success) {
-        throw new Error(logoutResponse.message);
-      }
-
+      
+      // Clear Redux auth state
       dispatch(logout());
-      showToast('success', logoutResponse.message);
+      
+      // Show success message and redirect
+      showToast('success', logoutResponse.message || 'Logged out successfully');
       router.push(WEBSITE_LOGIN);
     } catch (error) {
-      showToast('error', error.message);
+      console.error('Logout error:', error);
+      showToast('error', error.message || 'Logout failed');
+      // Still redirect even if API fails
+      router.push(WEBSITE_LOGIN);
     }
   };
 
