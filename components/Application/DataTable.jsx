@@ -116,21 +116,38 @@ const DataTable = ({
   } = useQuery({
     queryKey: [queryKey, { columnFilters, globalFilter, pagination, sorting }],
     queryFn: async () => {
-      const url = new URL(
-        fetchUrl, 
-        process.env.NEXT_PUBLIC_BASE_URL || window.location.origin
-      )
-      
-      url.searchParams.set('start', `${pagination.pageIndex * pagination.pageSize}`);
-      url.searchParams.set('size', `${pagination.pageSize}`);
-      url.searchParams.set('filters', JSON.stringify(columnFilters ?? []));
-      url.searchParams.set('globalFilter', globalFilter ?? '');
-      url.searchParams.set('sorting', JSON.stringify(sorting ?? []));
-      url.searchParams.set('deleteType', deleteType);
+      try {
+        // Prefer relative path so browser sends same-origin cookies reliably
+        let href
+        if (fetchUrl.startsWith('/')) {
+          const urlObj = new URL(window.location.origin + fetchUrl)
+          href = urlObj.href
+        } else {
+          href = new URL(fetchUrl, process.env.NEXT_PUBLIC_BASE_URL || window.location.origin).href
+        }
 
-      const { data: response } = await axios.get(url.href)
+        const url = new URL(href)
+        url.searchParams.set('start', `${pagination.pageIndex * pagination.pageSize}`)
+        url.searchParams.set('size', `${pagination.pageSize}`)
+        url.searchParams.set('filters', JSON.stringify(columnFilters ?? []))
+        url.searchParams.set('globalFilter', globalFilter ?? '')
+        url.searchParams.set('sorting', JSON.stringify(sorting ?? []))
+        url.searchParams.set('deleteType', deleteType)
 
-      return response
+        const { data: response } = await axios.get(url.href)
+        return response
+      } catch (error) {
+        console.error('DataTable fetch error for', fetchUrl, error)
+        try {
+          const serverMessage = error?.response?.data?.message || error?.message
+          // show toast to surface the problem to user
+          const { showToast } = await import('@/lib/showToast')
+          showToast('error', serverMessage)
+        } catch (toastError) {
+          console.error('Failed to show toast:', toastError)
+        }
+        throw error
+      }
     },
     placeholderData: keepPreviousData,
   })
