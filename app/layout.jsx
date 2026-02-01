@@ -1,5 +1,3 @@
-import Footer from '@/components/Application/Website/Footer'
-import Header from '@/components/Application/Website/Header'
 import './globals.css'
 import { Kumbh_Sans } from 'next/font/google'
 import GlobalProvider from '@/components/Application/GlobalProvider'
@@ -15,9 +13,7 @@ const layout = ({ children }) => {
     <html lang="en">
       <body className={kumbh.className}>
         <GlobalProvider>
-          <Header />
           <main>{children}</main>
-          <Footer />
         </GlobalProvider>
       </body>
     </html>
