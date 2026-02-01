@@ -49,7 +49,7 @@ export async function PUT(request) {
         }
 
     } catch (error) {
-        console.error('PUT /api/coupon/delete error:', error);
+        console.error('PUT /api/review/delete error:', error);
         return catchError(error);
     }
 }
@@ -66,7 +66,7 @@ export async function DELETE(request) {
         const ids = payload.ids || [];
         const deleteType = payload.deleteType;
 
-        console.log('DELETE /api/coupon/delete - IDs:', ids, 'Type:', deleteType);
+        console.log('DELETE /api/review/delete - IDs:', ids, 'Type:', deleteType);
 
         if (!Array.isArray(ids) || ids.length === 0) {
             return response(false, 400, 'Invalid or empty id list.');
@@ -74,7 +74,7 @@ export async function DELETE(request) {
 
         const data = await ReviewModel.find({ _id: { $in: ids } }).lean();
         if (!data.length) {
-            return response(false, 404, 'Coupon(s) not found.');
+            return response(false, 404, 'Review(s) not found.');
         }
 
         if (deleteType !== 'PD') {
@@ -84,10 +84,10 @@ export async function DELETE(request) {
         // Permanent Delete
         await ReviewModel.deleteMany({ _id: { $in: ids } });
 
-        return response(true, 200, `${ids.length} coupon(s) deleted permanently.`);
+        return response(true, 200, `${ids.length} review(s) deleted permanently.`);
 
     } catch (error) {
-        console.error('DELETE /api/coupon/delete error:', error);
+        console.error('DELETE /api/review/delete error:', error);
         return catchError(error);
     }
 }

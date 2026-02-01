@@ -110,7 +110,13 @@ export async function GET(request) {
 
     // 📦 Data fetch
     const getReview = await ReviewModel.aggregate(pipeline);
-    const totalRowCount = await ReviewModel.countDocuments(matchQuery);
+    
+    // Build count query (without productData/userData fields)
+    let countQuery = {};
+    if (matchQuery.deletedAt !== undefined) {
+      countQuery.deletedAt = matchQuery.deletedAt;
+    }
+    const totalRowCount = await ReviewModel.countDocuments(countQuery);
 
     return NextResponse.json({
       success: true,
