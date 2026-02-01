@@ -14,7 +14,7 @@ import { useRouter } from "next/navigation";
 import { FaRegEyeSlash, FaRegEye } from "react-icons/fa";
 import { auth } from "@/lib/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { getUserRole } from "@/lib/roleHelpers";
+import { getUserRoleFromAPI } from "@/lib/clientRoleHelpers";
 
 const LoginPage = () => {
   const [loading, setLoading] = useState(false);
@@ -35,8 +35,8 @@ const LoginPage = () => {
       setLoading(true);
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       
-      // Fetch user role from MongoDB
-      const userRole = await getUserRole(email);
+      // Fetch user role from API (client-safe)
+      const userRole = await getUserRoleFromAPI(email);
       
       showToast("success", "Login successful!");
       

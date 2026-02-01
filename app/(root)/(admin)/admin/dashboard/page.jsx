@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { auth } from '@/lib/firebase'
 import { onAuthStateChanged } from 'firebase/auth'
-import { getUserRole } from '@/lib/roleHelpers'
+import { getUserRoleFromAPI } from '@/lib/clientRoleHelpers'
 import BreadCrumb from "@/components/Application/Admin/BreadCrumb"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -33,7 +33,7 @@ const Dashboard = () => {
       }
 
       try {
-        const role = await getUserRole(user.email)
+        const role = await getUserRoleFromAPI(user.email);
         if (role !== "admin") {
           router.push("/")
           return
