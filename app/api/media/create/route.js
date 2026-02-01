@@ -1,3 +1,4 @@
+import { authMiddleware } from "@/lib/authMiddleware";
 import { v2 as cloudinary } from 'cloudinary';
 import { connectDB } from "@/lib/detabaseConnection";
 import { catchError, response } from "@/lib/helperFunction";

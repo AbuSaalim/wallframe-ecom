@@ -1,3 +1,4 @@
+import { authMiddleware } from "@/lib/authMiddleware";
 import { connectDB } from "@/lib/detabaseConnection";
 import { catchError, response } from "@/lib/helperFunction";
 import ProductModel from "@/models/Product.model";

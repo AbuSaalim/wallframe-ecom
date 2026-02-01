@@ -1,3 +1,4 @@
+import { authMiddleware } from "@/lib/authMiddleware";
 import { connectDB } from "@/lib/detabaseConnection";
 import { catchError, response } from "@/lib/helperFunction";
 import { LoginSchema } from "@/lib/zodSchema";

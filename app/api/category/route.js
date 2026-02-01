@@ -1,14 +1,14 @@
+import { authMiddleware } from "@/lib/authMiddleware";
 import { connectDB } from "@/lib/detabaseConnection";
 import { catchError, response } from "@/lib/helperFunction";
 import CategoryModel from "@/models/Category.model";
 import { NextResponse } from "next/server";
 export async function GET(request) {
   try {
-    // Check authentication
-    const auth = await isAuthenticated('admin');
-    if (!auth.isAuth) {
-      return response(false, 403, 'Unauthorized.');
-    }
+    // Verify Firebase token and admin role
+    const auth = await authMiddleware(request, { requireAdmin: true });
+    if (auth.isError) return auth.response;
+
     await connectDB();
     const searchParams = request.nextUrl.searchParams;
     // Extract query parameters

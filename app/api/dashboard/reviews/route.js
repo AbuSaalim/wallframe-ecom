@@ -1,13 +1,16 @@
 import { connectDB } from "@/lib/detabaseConnection";
 import { catchError, response } from "@/lib/helperFunction";
 import ReviewModel from "@/models/Review.model";
+import { authMiddleware } from "@/lib/authMiddleware";
+
 export async function GET(request) {
   try {
-    const auth = await isAuthenticated("admin");
-    if (!auth.isAuth) {
-      return response(false, 403, "Unauthorized.");
-    }
+    // Verify Firebase token and admin role
+    const auth = await authMiddleware(request, { requireAdmin: true });
+    if (auth.isError) return auth.response;
+
     await connectDB();
+    
     // Fetch latest reviews with product and user information
     const latestReviews = await ReviewModel.aggregate([
       {

@@ -1,19 +1,21 @@
 import { connectDB } from "@/lib/detabaseConnection";
 import UserModel from "@/models/User.model";
 import { response, catchError } from "@/lib/helperFunction";
-import { requireAdminRole } from "@/lib/adminHelpers";
+import { authMiddleware } from "@/lib/authMiddleware";
 
 export async function PUT(request) {
   try {
+    // Verify Firebase token and admin role
+    const auth = await authMiddleware(request, { requireAdmin: true });
+    if (auth.isError) return auth.response;
+
     await connectDB();
 
-    // Get requester's email from header or body
-    const { email: requesterEmail, targetEmail, role } = await request.json();
+    // Get target user email and role from request body
+    const { targetEmail, role } = await request.json();
 
-    // Check if requester is admin
-    const adminCheck = await requireAdminRole(requesterEmail);
-    if (adminCheck) {
-      return adminCheck;
+    if (!targetEmail || !role) {
+      return response(false, 400, "targetEmail and role are required", null);
     }
 
     // Validate role
@@ -44,17 +46,11 @@ export async function PUT(request) {
 
 export async function GET(request) {
   try {
+    // Verify Firebase token and admin role
+    const auth = await authMiddleware(request, { requireAdmin: true });
+    if (auth.isError) return auth.response;
+
     await connectDB();
-
-    // Get requester's email from query
-    const { searchParams } = new URL(request.url);
-    const requesterEmail = searchParams.get("requesterEmail");
-
-    // Check if requester is admin
-    const adminCheck = await requireAdminRole(requesterEmail);
-    if (adminCheck) {
-      return adminCheck;
-    }
 
     // Get all users
     const users = await UserModel.find({ deletedAt: null }).select(

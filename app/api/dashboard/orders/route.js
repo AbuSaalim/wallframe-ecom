@@ -1,6 +1,7 @@
 import { connectDB } from "@/lib/detabaseConnection";
 import { catchError, response } from "@/lib/helperFunction";
-import { NextResponse } from "next/server";
+import { authMiddleware } from "@/lib/authMiddleware";
+
 // Dynamic mock data generator
 const generateMockOrders = () => [
   {
@@ -51,11 +52,12 @@ const generateMockOrders = () => [
 ];
 export async function GET(request) {
   try {
-    const auth = await isAuthenticated("admin");
-    if (!auth.isAuth) {
-      return response(false, 403, "Unauthorized.");
-    }
+    // Verify Firebase token and admin role
+    const auth = await authMiddleware(request, { requireAdmin: true });
+    if (auth.isError) return auth.response;
+
     await connectDB();
+    
     // TODO: Replace with actual Order model query when available
     const latestOrders = generateMockOrders();
     return response(true, 200, "Latest orders fetched successfully", latestOrders);
