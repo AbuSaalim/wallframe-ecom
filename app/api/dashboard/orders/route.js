@@ -1,12 +1,12 @@
 import { isAuthenticated } from "@/lib/authentication";
 import { connectDB } from "@/lib/detabaseConnection";
-import { response } from "@/lib/helperFunction";
+import { catchError, response } from "@/lib/helperFunction";
 import { NextResponse } from "next/server";
 
-// Mock data for orders until Order model is created
-const mockOrders = [
+// Dynamic mock data generator
+const generateMockOrders = () => [
   {
-    _id: "6708d4e5c1b2a3f4e5f6g7h8",
+    _id: "ORD-001-2025",
     orderId: "#ORD-001",
     paymentId: "PAY-2025-001",
     items: 3,
@@ -15,7 +15,7 @@ const mockOrders = [
     createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
   },
   {
-    _id: "6708d4e5c1b2a3f4e5f6g7h9",
+    _id: "ORD-002-2025",
     orderId: "#ORD-002",
     paymentId: "PAY-2025-002",
     items: 2,
@@ -24,7 +24,7 @@ const mockOrders = [
     createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
   },
   {
-    _id: "6708d4e5c1b2a3f4e5f6g7i0",
+    _id: "ORD-003-2025",
     orderId: "#ORD-003",
     paymentId: "PAY-2025-003",
     items: 5,
@@ -33,7 +33,7 @@ const mockOrders = [
     createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
   },
   {
-    _id: "6708d4e5c1b2a3f4e5f6g7i1",
+    _id: "ORD-004-2025",
     orderId: "#ORD-004",
     paymentId: "PAY-2025-004",
     items: 1,
@@ -42,7 +42,7 @@ const mockOrders = [
     createdAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
   },
   {
-    _id: "6708d4e5c1b2a3f4e5f6g7i2",
+    _id: "ORD-005-2025",
     orderId: "#ORD-005",
     paymentId: "PAY-2025-005",
     items: 4,
@@ -62,18 +62,11 @@ export async function GET(request) {
     await connectDB();
 
     // TODO: Replace with actual Order model query when available
-    const latestOrders = mockOrders.slice(0, 5);
+    const latestOrders = generateMockOrders();
 
-    return NextResponse.json({
-      success: true,
-      data: latestOrders,
-      message: "Latest orders fetched successfully",
-    });
+    return response(true, 200, "Latest orders fetched successfully", latestOrders);
   } catch (error) {
     console.error("GET /api/dashboard/orders error:", error);
-    return NextResponse.json(
-      { success: false, message: error.message, statusCode: 500 },
-      { status: 500 }
-    );
+    return catchError(error);
   }
 }

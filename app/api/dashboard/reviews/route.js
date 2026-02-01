@@ -1,8 +1,7 @@
 import { isAuthenticated } from "@/lib/authentication";
 import { connectDB } from "@/lib/detabaseConnection";
-import { response } from "@/lib/helperFunction";
+import { catchError, response } from "@/lib/helperFunction";
 import ReviewModel from "@/models/Review.model";
-import { NextResponse } from "next/server";
 
 export async function GET(request) {
   try {
@@ -13,6 +12,7 @@ export async function GET(request) {
 
     await connectDB();
 
+    // Fetch latest reviews with product and user information
     const latestReviews = await ReviewModel.aggregate([
       {
         $lookup: {
@@ -59,16 +59,9 @@ export async function GET(request) {
       },
     ]);
 
-    return NextResponse.json({
-      success: true,
-      data: latestReviews,
-      message: "Latest reviews fetched successfully",
-    });
+    return response(true, 200, "Latest reviews fetched successfully", latestReviews);
   } catch (error) {
     console.error("GET /api/dashboard/reviews error:", error);
-    return NextResponse.json(
-      { success: false, message: error.message, statusCode: 500 },
-      { status: 500 }
-    );
+    return catchError(error);
   }
 }

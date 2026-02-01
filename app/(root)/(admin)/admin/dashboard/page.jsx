@@ -42,18 +42,41 @@ const Dashboard = () => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true)
-        const [statsRes, ordersRes, reviewsRes] = await Promise.all([
-          axios.get('/api/dashboard/stats'),
-          axios.get('/api/dashboard/orders'),
-          axios.get('/api/dashboard/reviews'),
-        ])
+        
+        // Fetch stats
+        try {
+          const statsRes = await axios.get('/api/dashboard/stats')
+          if (statsRes.data.success) {
+            setStats(statsRes.data.data)
+          }
+        } catch (error) {
+          console.error('Stats fetch error:', error)
+          setStats({ totalCategories: 0, totalProducts: 0, totalCustomers: 0, totalOrders: 0 })
+        }
 
-        if (statsRes.data.success) setStats(statsRes.data.data)
-        if (ordersRes.data.success) setLatestOrders(ordersRes.data.data)
-        if (reviewsRes.data.success) setLatestReviews(reviewsRes.data.data)
+        // Fetch orders
+        try {
+          const ordersRes = await axios.get('/api/dashboard/orders')
+          if (ordersRes.data.success) {
+            setLatestOrders(ordersRes.data.data || [])
+          }
+        } catch (error) {
+          console.error('Orders fetch error:', error)
+          setLatestOrders([])
+        }
+
+        // Fetch reviews
+        try {
+          const reviewsRes = await axios.get('/api/dashboard/reviews')
+          if (reviewsRes.data.success) {
+            setLatestReviews(reviewsRes.data.data || [])
+          }
+        } catch (error) {
+          console.error('Reviews fetch error:', error)
+          setLatestReviews([])
+        }
       } catch (error) {
         console.error('Dashboard fetch error:', error)
-        showToast(error.response?.data?.message || 'Failed to load dashboard', 'error')
       } finally {
         setLoading(false)
       }

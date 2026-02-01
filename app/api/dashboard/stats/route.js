@@ -1,6 +1,6 @@
 import { isAuthenticated } from "@/lib/authentication";
 import { connectDB } from "@/lib/detabaseConnection";
-import { response } from "@/lib/helperFunction";
+import { catchError, response } from "@/lib/helperFunction";
 import CategoryModel from "@/models/Category.model";
 import ProductModel from "@/models/Product.model";
 import UserModel from "@/models/User.model";
@@ -15,13 +15,32 @@ export async function GET(request) {
 
     await connectDB();
 
-    // Get counts
-    const totalCategories = await CategoryModel.countDocuments({ deletedAt: null });
-    const totalProducts = await ProductModel.countDocuments({ deletedAt: null });
-    const totalCustomers = await UserModel.countDocuments({ role: 'user', deletedAt: null });
-    
-    // Estimate orders count (we can adjust based on your Order model)
-    const totalOrders = 1250; // Placeholder - adjust when Order model is created
+    // Get counts with error handling
+    let totalCategories = 0;
+    let totalProducts = 0;
+    let totalCustomers = 0;
+    let totalOrders = 1250; // Placeholder until Order model
+
+    try {
+      totalCategories = await CategoryModel.countDocuments({ deletedAt: null });
+    } catch (err) {
+      console.error("Error counting categories:", err);
+    }
+
+    try {
+      totalProducts = await ProductModel.countDocuments({ deletedAt: null });
+    } catch (err) {
+      console.error("Error counting products:", err);
+    }
+
+    try {
+      totalCustomers = await UserModel.countDocuments({ 
+        role: 'user', 
+        deletedAt: null 
+      });
+    } catch (err) {
+      console.error("Error counting customers:", err);
+    }
 
     const stats = {
       totalCategories,
@@ -30,16 +49,9 @@ export async function GET(request) {
       totalOrders,
     };
 
-    return NextResponse.json({
-      success: true,
-      data: stats,
-      message: "Stats fetched successfully",
-    });
+    return response(true, 200, "Stats fetched successfully", stats);
   } catch (error) {
     console.error("GET /api/dashboard/stats error:", error);
-    return NextResponse.json(
-      { success: false, message: error.message, statusCode: 500 },
-      { status: 500 }
-    );
+    return catchError(error);
   }
 }
