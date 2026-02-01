@@ -69,6 +69,7 @@ const RegisterPage = () => {
         uid: userCredential.user.uid,
         name: values.name,
         email: values.email,
+        role: "user",
       });
 
       form.reset();

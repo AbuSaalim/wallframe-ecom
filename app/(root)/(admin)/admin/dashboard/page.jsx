@@ -1,6 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { auth } from '@/lib/firebase'
+import { onAuthStateChanged } from 'firebase/auth'
+import { getUserRole } from '@/lib/roleHelpers'
 import BreadCrumb from "@/components/Application/Admin/BreadCrumb"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -17,6 +21,32 @@ const Dashboard = () => {
   const [latestOrders, setLatestOrders] = useState([])
   const [latestReviews, setLatestReviews] = useState([])
   const [loading, setLoading] = useState(true)
+  const [isAuthorized, setIsAuthorized] = useState(false)
+  const router = useRouter()
+
+  // Check authentication and role
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        router.push("/auth/login")
+        return
+      }
+
+      try {
+        const role = await getUserRole(user.email)
+        if (role !== "admin") {
+          router.push("/")
+          return
+        }
+        setIsAuthorized(true)
+      } catch (error) {
+        console.error("Error checking role:", error)
+        router.push("/auth/login")
+      }
+    })
+
+    return () => unsubscribe()
+  }, [router])
 
   // Dynamic chart data
   const orderTrendData = [

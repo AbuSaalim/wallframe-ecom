@@ -7,7 +7,7 @@ export async function POST(request) {
     await connectDB();
     
     const body = await request.json();
-    const { uid, name, email } = body;
+    const { uid, name, email, role = "user" } = body;
 
     // Check if user already exists
     const existingUser = await UserModel.findOne({ email });
@@ -15,12 +15,12 @@ export async function POST(request) {
       return response(false, 400, "User already exists", null);
     }
 
-    // Create new user
+    // Create new user with role
     const user = new UserModel({
       uid,
       name,
       email,
-      role: "user",
+      role,
       password: "", // Firebase handles password
     });
 
@@ -30,6 +30,7 @@ export async function POST(request) {
       id: user._id,
       email: user.email,
       name: user.name,
+      role: user.role,
     });
   } catch (error) {
     return catchError(error);

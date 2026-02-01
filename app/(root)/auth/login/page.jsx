@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation";
 import { FaRegEyeSlash, FaRegEye } from "react-icons/fa";
 import { auth } from "@/lib/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
+import { getUserRole } from "@/lib/roleHelpers";
 
 const LoginPage = () => {
   const [loading, setLoading] = useState(false);
@@ -34,11 +35,15 @@ const LoginPage = () => {
       setLoading(true);
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       
+      // Fetch user role from MongoDB
+      const userRole = await getUserRole(email);
+      
       showToast("success", "Login successful!");
       
-      // Redirect to dashboard
+      // Redirect based on role
+      const redirectPath = userRole === "admin" ? "/admin/dashboard" : "/";
       setTimeout(() => {
-        router.push("/");
+        router.push(redirectPath);
       }, 1500);
     } catch (error) {
       let errorMessage = "Login failed";
