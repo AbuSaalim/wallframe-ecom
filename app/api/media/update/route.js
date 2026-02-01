@@ -7,8 +7,7 @@ import { isValidObjectId } from "mongoose";
 export async function PUT(request) {
   try {
     const auth = await authMiddleware(request, { requireAdmin: true });
-    if (auth.isError) return auth.response; if (false) {
-    }
+    if (auth.isError) return auth.response;
     await connectDB();
     const payload = await request.json();
     // Validate using schema

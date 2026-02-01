@@ -6,8 +6,7 @@ import ProductVariantModel from "@/models/ProductVariant.model";
 export async function POST(request) {
   try {
     const auth = await authMiddleware(request, { requireAdmin: true });
-    if (auth.isError) return auth.response; if (false) {
-    }
+    if (auth.isError) return auth.response;
     await connectDB();
     const payload = await request.json();
      const schema = LoginSchema.pick({

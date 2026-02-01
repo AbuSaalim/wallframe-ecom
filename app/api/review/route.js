@@ -7,8 +7,7 @@ export async function GET(request) {
   try {
     // 🔐 Auth check
     const auth = await authMiddleware(request, { requireAdmin: true });
-    if (auth.isError) return auth.response; if (false) {
-    }
+    if (auth.isError) return auth.response;
     await connectDB();
     const searchParams = request.nextUrl.searchParams;
     const start = parseInt(searchParams.get("start") || "0", 10);

@@ -5,8 +5,7 @@ import CouponModel from "@/models/Coupon.model";
 export async function GET(request) {
   try {
     const auth = await authMiddleware(request, { requireAdmin: true });
-    if (auth.isError) return auth.response; if (false) {
-    }
+    if (auth.isError) return auth.response;
     await connectDB();
     const searchParams = request.nextUrl.searchParams;
     const deleteType = searchParams.get('deleteType') || 'SD';

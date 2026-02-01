@@ -14,8 +14,7 @@ export async function POST(request) {
   try {
     // Check authentication
     const auth = await authMiddleware(request, { requireAdmin: true });
-    if (auth.isError) return auth.response; if (false) {
-    }
+    if (auth.isError) return auth.response;
     // Parse request body
     payload = await request.json();
     if (!payload || !Array.isArray(payload) || payload.length === 0) {

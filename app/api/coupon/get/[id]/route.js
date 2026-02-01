@@ -6,8 +6,7 @@ import { isValidObjectId } from "mongoose";
 export async function GET(request, { params }) {
   try {
     const auth = await authMiddleware(request, { requireAdmin: true });
-    if (auth.isError) return auth.response; if (false) {
-    }
+    if (auth.isError) return auth.response;
     await connectDB();
     const { id } = await params;
     console.log('🔍 Fetching Coupon with ID:', id);
