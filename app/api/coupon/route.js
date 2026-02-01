@@ -5,11 +5,10 @@ import CouponModel from "@/models/Coupon.model";
 import { NextResponse } from "next/server";
 export async function GET(request) {
   try {
-    // Check authentication
-    const auth = await isAuthenticated('admin');
-    if (!auth.isAuth) {
-      return response(false, 403, 'Unauthorized.');
-    }
+    // Verify Firebase token and check admin role
+    const auth = await authMiddleware(request, { requireAdmin: true });
+    if (auth.isError) return auth.response;
+
     await connectDB();
     const searchParams = request.nextUrl.searchParams;
     // Extract query parameters
