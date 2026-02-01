@@ -90,7 +90,7 @@ export async function GET(request) {
           email: 1,
           phone: 1,
           address: 1,
-          avatar: 1,
+          avatar: "$avatar.url",
           isEmailVerified: 1,
           createdAt: 1,
           updatedAt: 1,
