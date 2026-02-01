@@ -12,7 +12,7 @@ The e-commerce application has been completely migrated from a custom JWT + OTP 
 - Custom JWT token management
 - Password hashing with bcrypt
 - Complex email verification workflows
-
+ 
 ## 📊 Changes Summary
 
 ### Files Created (New)

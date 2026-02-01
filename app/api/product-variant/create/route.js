@@ -1,20 +1,15 @@
-import { isAuthenticated } from "@/lib/authentication";
 import { connectDB } from "@/lib/detabaseConnection";
 import { catchError, response } from "@/lib/helperFunction";
 import { LoginSchema } from "@/lib/zodSchema";
 import ProductVariantModel from "@/models/ProductVariant.model";
-
-
 export async function POST(request) {
   try {
     const auth = await isAuthenticated("admin");
     if (!auth.isAuth) {
       return response(false, 403, "Unauthorized.");
     }
-
     await connectDB();
     const payload = await request.json();
-
      const schema = LoginSchema.pick({
     product: true,
     sku: true,
@@ -25,9 +20,7 @@ export async function POST(request) {
     discountPercentage: true,
     media: true
   });
-
     const validate = schema.safeParse(payload);
-
     if (!validate.success) {
       return response(
         false,
@@ -36,9 +29,6 @@ export async function POST(request) {
         validate.error.errors
       );
     }
-
-  
-
     const variantData = validate.data;
     const newProductVariant = new ProductVariantModel({
       product: variantData.product,
@@ -51,7 +41,6 @@ export async function POST(request) {
       media: variantData.media,
     });
     await newProductVariant.save();
-
     return response(true, 201, "Product variant added successfully", newProductVariant);
   } catch (error) {
     return catchError(error);

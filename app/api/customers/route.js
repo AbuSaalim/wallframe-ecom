@@ -1,9 +1,7 @@
-import { isAuthenticated } from "@/lib/authentication";
 import { connectDB } from "@/lib/detabaseConnection";
 import { catchError, response } from "@/lib/helperFunction";
 import UserModel from "@/models/User.model";
 import { NextResponse } from "next/server";
-
 export async function GET(request) {
   try {
     // 🔐 Auth check
@@ -11,21 +9,16 @@ export async function GET(request) {
     if (!auth.isAuth) {
       return response(false, 403, "Unauthorized.");
     }
-
     await connectDB();
-
     const searchParams = request.nextUrl.searchParams;
-
     const start = parseInt(searchParams.get("start") || "0", 10);
     const size = parseInt(searchParams.get("size") || "10", 10);
     const filters = JSON.parse(searchParams.get("filters") || "[]");
     const globalFilter = searchParams.get("globalFilter") || "";
     const sorting = JSON.parse(searchParams.get("sorting") || "[]");
     const deleteType = searchParams.get("deleteType");
-
     // 🧠 Match query
     let matchQuery = {};
-
     // 🗑️ Delete logic
     if (deleteType === "SD") {
       matchQuery.deletedAt = null;
@@ -34,7 +27,6 @@ export async function GET(request) {
     } else {
       matchQuery.deletedAt = null;
     }
-
     // 🔍 Global search (FIXED for boolean)
     if (globalFilter) {
       matchQuery["$or"] = [
@@ -42,17 +34,14 @@ export async function GET(request) {
         { email: { $regex: globalFilter, $options: "i" } },
         { phone: { $regex: globalFilter, $options: "i" } },
         { address: { $regex: globalFilter, $options: "i" } },
-
         ...(globalFilter.toLowerCase() === "verified"
           ? [{ isEmailVerified: true }]
           : []),
-
         ...(globalFilter.toLowerCase() === "not verified"
           ? [{ isEmailVerified: false }]
           : []),
       ];
     }
-
     // 🎯 Column filters
     filters.forEach((filter) => {
       if (filter.id === "isEmailVerified") {
@@ -64,7 +53,6 @@ export async function GET(request) {
         };
       }
     });
-
     // 🔃 Sorting
     let sortQuery = {};
     sorting.forEach((sort) => {
@@ -72,7 +60,6 @@ export async function GET(request) {
         sortQuery[sort.id] = sort.desc ? -1 : 1;
       }
     });
-
     // 🧩 Aggregation pipeline
     const pipeline = [
       { $match: matchQuery },
@@ -98,11 +85,9 @@ export async function GET(request) {
         },
       },
     ];
-
     // 📦 Data fetch
     const customers = await UserModel.aggregate(pipeline);
     const totalRowCount = await UserModel.countDocuments(matchQuery);
-
     return NextResponse.json({
       success: true,
       data: customers,

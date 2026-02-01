@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-import bcrypt from "bcrypt";
 
 const userSchema = new mongoose.Schema({
     role: {
@@ -50,17 +49,8 @@ const userSchema = new mongoose.Schema({
     },
 }, {timestamps: true});
 
-// Hash password before saving
-userSchema.pre('save', async function(next) {
-    if(!this.isModified('password')) return next();
-    this.password = await bcrypt.hash(this.password, 10);
-    next();
-});
-
-// FIX: Use "methods" (plural) not "method" (singular)
-userSchema.methods.comparePassword = async function (password) {
-    return await bcrypt.compare(password, this.password);
-}
+// Password hashing handled by Firebase Authentication
+// Removed bcrypt middleware - Firebase manages password encryption
 
 const UserModel = mongoose.models.User || mongoose.model('User', userSchema, 'users');
 

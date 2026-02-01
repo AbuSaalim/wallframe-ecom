@@ -15,7 +15,7 @@ Firebase SDK initialization and configuration
 - Exports configured auth instance
 ```
 **Purpose**: Single Firebase entry point for entire app
-
+ 
 ---
 
 ### 2. **lib/authService.js** (100+ lines)

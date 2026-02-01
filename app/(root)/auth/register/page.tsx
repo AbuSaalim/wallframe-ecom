@@ -5,7 +5,6 @@ import React, { useState } from "react";
 import Logo from "@/public/assets/images/logo-black.png";
 import Image from "next/image";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { LoginSchema } from "@/lib/zodSchema";
 import { useForm } from "react-hook-form";
 import { FaRegEyeSlash, FaRegEye } from "react-icons/fa";
 import { Button } from "@/components/ui/button";
@@ -19,24 +18,31 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import Buttonloading from "@/components/Application/Buttonloading";
-import { z } from "zod";  // Fixed import
+import { z } from "zod";
 import Link from "next/link";
 import { WEBSITE_LOGIN } from "@/routes/WebsiteRoute";
 import axios from "axios";
-import { showToast } from "@/lib/showToast";  
+import { showToast } from "@/lib/showToast";
+import { useRouter } from "next/navigation";
+import { auth } from "@/lib/firebase";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 
 const RegisterPage = () => {
   const [loading, setLoading] = useState(false);
   const [isTypePassword, setIsTypePassword] = useState(true);
+  const router = useRouter();
 
-  const formSchema = LoginSchema.pick({
-    name: true,
-    email: true,
-    password: true,
-  }).extend({
+  const formSchema = z.object({
+    name: z.string().min(2, "Name must be at least 2 characters"),
+    email: z.string().email("Invalid email address"),
+    password: z.string()
+      .min(8, "Password must be at least 8 characters")
+      .regex(/[A-Z]/, "Password must contain uppercase letter")
+      .regex(/[a-z]/, "Password must contain lowercase letter")
+      .regex(/[0-9]/, "Password must contain number"),
     confirmPassword: z.string()
   }).refine((data) => data.password === data.confirmPassword, {
-    message: 'Password And Confirmed Password must be Same',
+    message: 'Passwords must match',
     path: ['confirmPassword'],
   });
 
@@ -51,23 +57,32 @@ const RegisterPage = () => {
   });
 
   const handleRegisterSubmit = async (values) => {
-    console.log(values);
     try {
       setLoading(true);
-      const { data: registerResponse } = await axios.post('/api/auth/register', values);
+      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+      
+      await updateProfile(userCredential.user, {
+        displayName: values.name,
+      });
 
-      if (!registerResponse.success) {
-        throw new Error(registerResponse.message);
-      }
+      await axios.post("/api/user/create", {
+        uid: userCredential.user.uid,
+        name: values.name,
+        email: values.email,
+      });
 
       form.reset();
-
-      // Fixed: Use string 'success' and proper syntax
-      showToast('success', registerResponse.message);
-
+      showToast('success', 'Account created successfully!');
+      
+      setTimeout(() => {
+        router.push(WEBSITE_LOGIN());
+      }, 1500);
     } catch (error) {
-      // Fixed: Use string 'error', proper variable, and close parenthesis
-      showToast('error', error.message || 'Registration failed');
+      let errorMessage = 'Registration failed';
+      if (error.code === 'auth/email-already-in-use') {
+        errorMessage = 'Email already in use';
+      }
+      showToast('error', error.message || errorMessage);
     } finally {
       setLoading(false);
     }
@@ -98,7 +113,6 @@ const RegisterPage = () => {
                 onSubmit={form.handleSubmit(handleRegisterSubmit)}
                 className="space-y-8"
               >
-                {/* Rest of your form fields remain the same */}
                 <div className="mb-5">
                   <FormField
                     control={form.control}
@@ -109,7 +123,7 @@ const RegisterPage = () => {
                         <FormControl>
                           <Input
                             type="text"
-                            placeholder="Abu Salim"
+                            placeholder="Enter your name"
                             {...field}
                           />
                         </FormControl>
@@ -187,19 +201,20 @@ const RegisterPage = () => {
                 </div>
 
                 <div className="mb-3">
-                  <Buttonloading
-                    loading={loading}
-                    type="submit"
-                    text="Create Account"
-                    className="w-full cursor-pointer"
-                  />
+                  {loading ? (
+                    <Buttonloading loadingText="Creating account..." />
+                  ) : (
+                    <Button type="submit" className="w-full">
+                      Create Account
+                    </Button>
+                  )}
                 </div>
 
                 <div className="text-center">
                   <div className="flex justify-center items-center gap-1">
                     <p className="pt-1">Already have account?</p>
                     <Link
-                      href={WEBSITE_LOGIN}
+                      href={WEBSITE_LOGIN()}
                       className="text-primary underline"
                     >
                       Login

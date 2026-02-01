@@ -1,9 +1,7 @@
-import { isAuthenticated } from "@/lib/authentication";
 import { connectDB } from "@/lib/detabaseConnection";
 import { catchError, response } from "@/lib/helperFunction";
 import CouponModel from "@/models/Coupon.model";
 import { NextResponse } from "next/server";
-
 export async function GET(request) {
   try {
     // Check authentication
@@ -11,11 +9,8 @@ export async function GET(request) {
     if (!auth.isAuth) {
       return response(false, 403, 'Unauthorized.');
     }
-
     await connectDB();
-
     const searchParams = request.nextUrl.searchParams;
-
     // Extract query parameters
     const start = parseInt(searchParams.get('start') || '0', 10);
     const size = parseInt(searchParams.get('size') || '10', 10);
@@ -23,10 +18,8 @@ export async function GET(request) {
     const globalFilter = searchParams.get('globalFilter') || '';
     const sorting = JSON.parse(searchParams.get('sorting') || '[]');
     const deleteType = searchParams.get('deleteType');
-
     // Build Match Query for coupons
     let matchQuery = {};
-
     if (deleteType === 'SD') {
       matchQuery.deletedAt = null;
     } else if (deleteType === 'PD') {
@@ -34,11 +27,9 @@ export async function GET(request) {
     } else {
       matchQuery.deletedAt = null;
     }
-
     // Numeric fields that need special handling
     const numericFields = ['discountPercentage', 'minimumShoppingAmount'];
     const dateFields = ['validity', 'createdAt'];
-
     // Column filtration
     filters.forEach(filter => {
       if (filter.id && filter.value) {
@@ -63,7 +54,6 @@ export async function GET(request) {
         }
       }
     });
-
     // Sorting
     let sortQuery = {};
     sorting.forEach(sort => {
@@ -71,9 +61,7 @@ export async function GET(request) {
         sortQuery[sort.id] = sort.desc ? -1 : 1;
       }
     });
-
     console.log('Match Query:', JSON.stringify(matchQuery, null, 2));
-
     // Aggregate pipeline
     const aggregatePipeline = [
       { $match: matchQuery },
@@ -97,7 +85,6 @@ export async function GET(request) {
         }
       }
     ];
-
     // Global filter with string fields
     if (globalFilter && globalFilter.trim() !== '') {
       aggregatePipeline.push({
@@ -112,7 +99,6 @@ export async function GET(request) {
         }
       });
     }
-
     // Add sorting, skip, limit
     aggregatePipeline.push(
       { $sort: Object.keys(sortQuery).length ? sortQuery : { createdAt: -1 } },
@@ -131,12 +117,9 @@ export async function GET(request) {
         }
       }
     );
-
     console.log('Full Pipeline:', JSON.stringify(aggregatePipeline, null, 2));
-
     // Execute Query
     const getCoupons = await CouponModel.aggregate(aggregatePipeline);
-
     // Count pipeline
     const countPipeline = [
       { $match: matchQuery },
@@ -159,7 +142,6 @@ export async function GET(request) {
         }
       }
     ];
-
     if (globalFilter && globalFilter.trim() !== '') {
       countPipeline.push({
         $match: {
@@ -173,18 +155,14 @@ export async function GET(request) {
         }
       });
     }
-
     countPipeline.push({ $count: "total" });
-
     const countResult = await CouponModel.aggregate(countPipeline);
     const totalRowCount = countResult.length > 0 ? countResult[0].total : 0;
-
     return NextResponse.json({
       success: true,
       data: getCoupons,
       meta: { totalRowCount }
     });
-
   } catch (error) {
     console.error('GET /api/coupon error:', error);
     console.error('Error stack:', error.stack);

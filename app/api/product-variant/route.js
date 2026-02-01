@@ -1,9 +1,7 @@
-import { isAuthenticated } from "@/lib/authentication";
 import { connectDB } from "@/lib/detabaseConnection";
 import { catchError, response } from "@/lib/helperFunction";
 import ProductVariantModel from "@/models/ProductVariant.model";
 import { NextResponse } from "next/server";
-
 export async function GET(request) {
   try {
     // Check authentication
@@ -11,11 +9,8 @@ export async function GET(request) {
     if (!auth.isAuth) {
       return response(false, 403, 'Unauthorized.');
     }
-
     await connectDB();
-
     const searchParams = request.nextUrl.searchParams;
-
     // Extract query parameters
     const start = parseInt(searchParams.get('start') || '0', 10);
     const size = parseInt(searchParams.get('size') || '10', 10);
@@ -23,10 +18,8 @@ export async function GET(request) {
     const globalFilter = searchParams.get('globalFilter') || '';
     const sorting = JSON.parse(searchParams.get('sorting') || '[]');
     const deleteType = searchParams.get('deleteType');
-
     // Build Match Query for products (before lookup)
     let matchQuery = {};
-
     if (deleteType === 'SD') {
       matchQuery.deletedAt = null;
     } else if (deleteType === 'PD') {
@@ -34,10 +27,8 @@ export async function GET(request) {
     } else {
       matchQuery.deletedAt = null;
     }
-
     // Numeric fields that need special handling
     const numericFields = ['mrp', 'sellingPrice', 'discountPercentage'];
-
     // Column filtration (before lookup)
     filters.forEach(filter => {
       if (filter.id && filter.value) {
@@ -45,7 +36,6 @@ export async function GET(request) {
           // Skip category - will handle after lookup
           return;
         }
-        
         if (numericFields.includes(filter.id)) {
           // For numeric fields, try exact match or range
           const numValue = parseFloat(filter.value);
@@ -56,14 +46,12 @@ export async function GET(request) {
           // Handle product filter
           matchQuery[filter.id] = { $regex: filter.value, $options: 'i' };
         }
-        
         else {
           // String fields - use regex
           matchQuery[filter.id] = { $regex: filter.value, $options: 'i' };
         }
       }
     });
-
     // Sorting
     let sortQuery = {};
     sorting.forEach(sort => {
@@ -71,9 +59,7 @@ export async function GET(request) {
         sortQuery[sort.id] = sort.desc ? -1 : 1;
       }
     });
-
     console.log('Initial Match Query:', JSON.stringify(matchQuery, null, 2));
-
     // Aggregate pipeline
     const aggregatePipeline = [
       { $match: matchQuery },
@@ -100,10 +86,8 @@ export async function GET(request) {
         }
       }
     ];
-
     // Build post-lookup match conditions
     let postLookupConditions = [];
-
     // Category filter
     const categoryFilter = filters.find(f => f.id === 'category');
     if (categoryFilter && categoryFilter.value) {
@@ -111,7 +95,6 @@ export async function GET(request) {
         'categoryData.name': { $regex: categoryFilter.value, $options: 'i' }
       });
     }
-
     // Global filter with string fields
     if (globalFilter && globalFilter.trim() !== '') {
       postLookupConditions.push({
@@ -123,7 +106,6 @@ export async function GET(request) {
         ]
       });
     }
-
     // Add post-lookup match if conditions exist
     if (postLookupConditions.length > 0) {
       aggregatePipeline.push({
@@ -132,7 +114,6 @@ export async function GET(request) {
           : { $and: postLookupConditions }
       });
     }
-
     // Add sorting, skip, limit, and projection
     aggregatePipeline.push(
       { $sort: Object.keys(sortQuery).length ? sortQuery : { createdAt: -1 } },
@@ -154,12 +135,9 @@ export async function GET(request) {
         }
       }
     );
-
     console.log('Full Pipeline:', JSON.stringify(aggregatePipeline, null, 2));
-
     // Execute Query
     const getProductVariant = await ProductVariantModel.aggregate(aggregatePipeline);
-
     // Count pipeline
     const countPipeline = [
       { $match: matchQuery },
@@ -185,7 +163,6 @@ export async function GET(request) {
         }
       }
     ];
-
     if (postLookupConditions.length > 0) {
       countPipeline.push({
         $match: postLookupConditions.length === 1 
@@ -193,18 +170,14 @@ export async function GET(request) {
           : { $and: postLookupConditions }
       });
     }
-
     countPipeline.push({ $count: "total" });
-
     const countResult = await ProductVariantModel.aggregate(countPipeline);
     const totalRowCount = countResult.length > 0 ? countResult[0].total : 0;
-
     return NextResponse.json({
       success: true,
       data: getProductVariant,
       meta: { totalRowCount }
     });
-
   } catch (error) {
     console.error('GET /api/product error:', error);
     console.error('Error stack:', error.stack);

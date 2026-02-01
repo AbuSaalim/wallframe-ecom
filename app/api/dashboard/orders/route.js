@@ -1,8 +1,6 @@
-import { isAuthenticated } from "@/lib/authentication";
 import { connectDB } from "@/lib/detabaseConnection";
 import { catchError, response } from "@/lib/helperFunction";
 import { NextResponse } from "next/server";
-
 // Dynamic mock data generator
 const generateMockOrders = () => [
   {
@@ -51,19 +49,15 @@ const generateMockOrders = () => [
     createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
   },
 ];
-
 export async function GET(request) {
   try {
     const auth = await isAuthenticated("admin");
     if (!auth.isAuth) {
       return response(false, 403, "Unauthorized.");
     }
-
     await connectDB();
-
     // TODO: Replace with actual Order model query when available
     const latestOrders = generateMockOrders();
-
     return response(true, 200, "Latest orders fetched successfully", latestOrders);
   } catch (error) {
     console.error("GET /api/dashboard/orders error:", error);

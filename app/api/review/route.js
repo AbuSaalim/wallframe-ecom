@@ -1,9 +1,7 @@
-import { isAuthenticated } from "@/lib/authentication";
 import { connectDB } from "@/lib/detabaseConnection";
 import { catchError, response } from "@/lib/helperFunction";
 import ReviewModel from "@/models/Review.model";
 import { NextResponse } from "next/server";
-
 export async function GET(request) {
   try {
     // 🔐 Auth check
@@ -11,21 +9,16 @@ export async function GET(request) {
     if (!auth.isAuth) {
       return response(false, 403, "Unauthorized.");
     }
-
     await connectDB();
-
     const searchParams = request.nextUrl.searchParams;
-
     const start = parseInt(searchParams.get("start") || "0", 10);
     const size = parseInt(searchParams.get("size") || "10", 10);
     const filters = JSON.parse(searchParams.get("filters") || "[]");
     const globalFilter = searchParams.get("globalFilter") || "";
     const sorting = JSON.parse(searchParams.get("sorting") || "[]");
     const deleteType = searchParams.get("deleteType");
-
     // 🧠 Match query
     let matchQuery = {};
-
     // 🗑️ Delete logic
     if (deleteType === "SD") {
       matchQuery.deletedAt = null;
@@ -34,7 +27,6 @@ export async function GET(request) {
     } else {
       matchQuery.deletedAt = null;
     }
-
     // 🔍 Global search
     if (globalFilter) {
       matchQuery["$or"] = [
@@ -45,7 +37,6 @@ export async function GET(request) {
         { title: { $regex: globalFilter, $options: "i" } },
       ];
     }
-
     // 🎯 Column filters
     filters.forEach(filter =>{
       if(filter.id === 'product'){
@@ -56,7 +47,6 @@ export async function GET(request) {
         matchQuery[filter.id] = {$regex: filter.value, $options : 'i'}
       }
     });
-
     // 🔃 Sorting
     let sortQuery = {};
     sorting.forEach((sort) => {
@@ -64,7 +54,6 @@ export async function GET(request) {
         sortQuery[sort.id] = sort.desc ? -1 : 1;
       }
     });
-
     // 🧩 Aggregation pipeline
     const pipeline = [
       {$lookup:{
@@ -107,17 +96,14 @@ export async function GET(request) {
         },
       },
     ];
-
     // 📦 Data fetch
     const getReview = await ReviewModel.aggregate(pipeline);
-    
     // Build count query (without productData/userData fields)
     let countQuery = {};
     if (matchQuery.deletedAt !== undefined) {
       countQuery.deletedAt = matchQuery.deletedAt;
     }
     const totalRowCount = await ReviewModel.countDocuments(countQuery);
-
     return NextResponse.json({
       success: true,
       data: getReview,

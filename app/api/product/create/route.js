@@ -1,20 +1,16 @@
-import { isAuthenticated } from "@/lib/authentication";
 import { connectDB } from "@/lib/detabaseConnection";
 import { catchError, response } from "@/lib/helperFunction";
 import { LoginSchema } from "@/lib/zodSchema";
 import ProductModel from "@/models/Product.model";
 import { encode } from "entities";
-
 export async function POST(request) {
   try {
     const auth = await isAuthenticated("admin");
     if (!auth.isAuth) {
       return response(false, 403, "Unauthorized.");
     }
-
     await connectDB();
     const payload = await request.json();
-
     const schema = LoginSchema.pick({
       name: true,
       slug: true,
@@ -25,9 +21,7 @@ export async function POST(request) {
       description: true,
       media: true,
     });
-
     const validate = schema.safeParse(payload);
-
     if (!validate.success) {
       return response(
         false,
@@ -36,9 +30,6 @@ export async function POST(request) {
         validate.error.errors
       );
     }
-
-  
-
     const productData = validate.data;
     const newProduct = new ProductModel({
       name: productData.name,
@@ -51,7 +42,6 @@ export async function POST(request) {
       media: productData.media,
     });
     await newProduct.save();
-
     return response(true, 201, "Product added successfully", newProduct);
   } catch (error) {
     return catchError(error);
