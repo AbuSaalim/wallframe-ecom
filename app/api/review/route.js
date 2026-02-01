@@ -35,23 +35,23 @@ export async function GET(request) {
       matchQuery.deletedAt = null;
     }
 
-    // 🔍 Global search (FIXED for boolean)
+    // 🔍 Global search
     if (globalFilter) {
       matchQuery["$or"] = [
-        { "productData.name": { $regex: globalFilter, $options: "i" } },
-        { "userData.name": { $regex: globalFilter, $options: "i" } },
+        { "product": { $regex: globalFilter, $options: "i" } },
+        { "user": { $regex: globalFilter, $options: "i" } },
         { rating: { $regex: globalFilter, $options: "i" } },
         { review: { $regex: globalFilter, $options: "i" } },
-        { address: { $regex: globalFilter, $options: "i" } },
+        { title: { $regex: globalFilter, $options: "i" } },
       ];
     }
 
     // 🎯 Column filters
     filters.forEach(filter =>{
       if(filter.id === 'product'){
-        matchQuery['productData.name'] = {$regex: filter.value, $options : 'i'}
+        matchQuery['product'] = {$regex: filter.value, $options : 'i'}
       }else if (filter.id === 'user') {
-        matchQuery['userData.name'] = {$regex: filter.value, $options : 'i'}
+        matchQuery['user'] = {$regex: filter.value, $options : 'i'}
       }else{
         matchQuery[filter.id] = {$regex: filter.value, $options : 'i'}
       }
@@ -61,14 +61,7 @@ export async function GET(request) {
     let sortQuery = {};
     sorting.forEach((sort) => {
       if (sort.id) {
-        // Map projected field names to original or lookup names
-        if (sort.id === 'product') {
-          sortQuery['productData.name'] = sort.desc ? -1 : 1;
-        } else if (sort.id === 'user') {
-          sortQuery['userData.name'] = sort.desc ? -1 : 1;
-        } else {
-          sortQuery[sort.id] = sort.desc ? -1 : 1;
-        }
+        sortQuery[sort.id] = sort.desc ? -1 : 1;
       }
     });
 
