@@ -9,6 +9,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
+import axios from 'axios'
+
+// Ensure axios sends cookies for same-origin requests (auth cookies)
+axios.defaults.withCredentials = true
 
 const queryClient = new QueryClient()
 
