@@ -61,7 +61,14 @@ export async function GET(request) {
     let sortQuery = {};
     sorting.forEach((sort) => {
       if (sort.id) {
-        sortQuery[sort.id] = sort.desc ? -1 : 1;
+        // Map projected field names to original or lookup names
+        if (sort.id === 'product') {
+          sortQuery['productData.name'] = sort.desc ? -1 : 1;
+        } else if (sort.id === 'user') {
+          sortQuery['userData.name'] = sort.desc ? -1 : 1;
+        } else {
+          sortQuery[sort.id] = sort.desc ? -1 : 1;
+        }
       }
     });
 
