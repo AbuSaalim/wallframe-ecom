@@ -51,9 +51,6 @@ const productSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Option A: expire exactly at deletedAt time (you must set deletedAt as a Date in the future or now)
-productSchema.index({ deletedAt: 1 }, { expireAfterSeconds: 0 });
-
 const ProductModel =
   mongoose.models.Product ||
   mongoose.model("Product", productSchema, "products");
