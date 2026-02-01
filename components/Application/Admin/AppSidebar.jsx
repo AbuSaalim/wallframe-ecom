@@ -22,7 +22,7 @@ import Link from "next/link"
 import { CollapsibleContent } from "@radix-ui/react-collapsible"
 
 const AppSidebar = () => {
-  const { toggleSidebar } = useSidebar()
+  const { toggleSidebar, isMobile } = useSidebar()
   
   return (
     <Sidebar className="z-50">
@@ -46,9 +46,11 @@ const AppSidebar = () => {
             alt="Logo White"
             priority
           />
-          <Button onClick={toggleSidebar} type="button" size="icon" className="md:hidden">
-            <IoMdClose/>
-          </Button>
+          {isMobile && (
+            <Button onClick={toggleSidebar} type="button" size="icon" className="md:hidden">
+              <IoMdClose/>
+            </Button>
+          )}
         </div>
       </SidebarHeader>
 

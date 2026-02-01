@@ -12,15 +12,14 @@ const layout = ({ children }) => {
             enableSystem
             disableTransitionOnChange
     >
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={true}>
       <AppSidebar />
-      <main className="md:w-[calc(100vw-16rem)] w-full">
-
-        
-        <div className="px-8 pt-[70px] min-h-[calc(100vh-40px)] pb-10">
-          <Topbar/>
-          {children}</div>
-        <div className="border-t h-[40px] flex justify-center items-center bg-gray-50 dark:bg-background text-sm"> @ 2025 Developer Abu Saalim. All Right Reserved.</div>
+      <main className="w-full md:flex-1 flex flex-col">
+        <Topbar/>
+        <div className="px-4 sm:px-6 md:px-8 pt-[60px] md:pt-[70px] min-h-[calc(100vh-110px)] pb-10 flex-1">
+          {children}
+        </div>
+        <div className="border-t h-[40px] flex justify-center items-center bg-gray-50 dark:bg-background text-sm">@ 2025 Developer Abu Saalim. All Right Reserved.</div>
       </main>
     </SidebarProvider>
     </ThemeProvider>
