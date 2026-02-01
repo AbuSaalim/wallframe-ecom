@@ -25,5 +25,14 @@ export const ADMIN_PRODUCT_VARIANT_EDIT = (id) => id ? `/admin/product-variant/e
 export const ADMIN_COUPON_ADD = '/admin/coupon/add' 
 export const ADMIN_COUPON_SHOW = '/admin/coupon' 
 export const ADMIN_COUPON_EDIT = (id) => id ? `/admin/coupon/edit/${id}` : ``  
+
+
+
+//Customer route
+export const ADMIN_CUSTOMERS_SHOW = '/admin/customers' 
+
+//Review route
+export const ADMIN_REVIEW_SHOW = '/admin/review' 
+
 // Trash route
 export const ADMIN_TRASH = '/admin/trash'
