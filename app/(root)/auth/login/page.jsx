@@ -33,9 +33,9 @@ const LoginPage = () => {
       // Create or sync user in MongoDB
       await axios.post("/api/user/create", {
         uid: userCredential.user.uid,
-        name: userCredential.user.displayName || "User",
         email: userCredential.user.email,
-        role: "user",
+        displayName: userCredential.user.displayName,
+        photoURL: userCredential.user.photoURL,
       }).catch(err => {
         // User might already exist, that's fine
         console.log("User sync:", err.message);

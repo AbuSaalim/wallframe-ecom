@@ -7,21 +7,54 @@ export async function POST(request) {
     await connectDB();
     
     const body = await request.json();
-    const { uid, name, email, role = "user" } = body;
+    const { uid, email, displayName, photoURL } = body;
 
-    // Check if user already exists
-    const existingUser = await UserModel.findOne({ email });
-    if (existingUser) {
-      return response(false, 400, "User already exists", null);
+    // Validate Firebase user data
+    if (!uid || !email) {
+      return response(false, 400, "uid and email are required", null);
     }
 
-    // Create new user with role
+    // Check if user already exists
+    let existingUser = await UserModel.findOne({ uid });
+    
+    if (existingUser) {
+      // User exists - return success (idempotent)
+      return response(true, 200, "User already exists", {
+        id: existingUser._id,
+        email: existingUser.email,
+        name: existingUser.name,
+        role: existingUser.role,
+      });
+    }
+
+    // Also check by email in case Firebase user data changed
+    existingUser = await UserModel.findOne({ email });
+    if (existingUser) {
+      // Update uid if it's different
+      if (existingUser.uid !== uid) {
+        existingUser.uid = uid;
+        await existingUser.save();
+      }
+      return response(true, 200, "User already exists", {
+        id: existingUser._id,
+        email: existingUser.email,
+        name: existingUser.name,
+        role: existingUser.role,
+      });
+    }
+
+    // Create new user from Firebase data
     const user = new UserModel({
       uid,
-      name,
       email,
-      role,
-      password: "", // Firebase handles password
+      name: displayName || email.split("@")[0], // Use email prefix as fallback
+      role: "user", // Default role
+      isEmailVerified: true, // Firebase users are pre-verified
+      avatar: {
+        url: photoURL || "",
+        public_id: "",
+      },
+      password: "", // Not used with Firebase
     });
 
     await user.save();

@@ -41,9 +41,9 @@ const RegisterPage = () => {
       // Create user in MongoDB
       await axios.post("/api/user/create", {
         uid: userCredential.user.uid,
-        name: userCredential.user.displayName || "User",
         email: userCredential.user.email,
-        role: "user",
+        displayName: userCredential.user.displayName,
+        photoURL: userCredential.user.photoURL,
       });
 
       showToast('success', 'Account created successfully!');
@@ -97,9 +97,9 @@ const RegisterPage = () => {
 
       await axios.post("/api/user/create", {
         uid: userCredential.user.uid,
-        name: values.name,
-        email: values.email,
-        role: "user",
+        email: userCredential.user.email,
+        displayName: userCredential.user.displayName,
+        photoURL: userCredential.user.photoURL,
       });
 
       form.reset();
