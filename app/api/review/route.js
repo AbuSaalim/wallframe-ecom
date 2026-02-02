@@ -4,7 +4,34 @@ import { catchError, response } from "@/lib/helperFunction";
 import ReviewModel from "@/models/Review.model";
 import { NextResponse } from "next/server";
 
+/**
+ * Safely parse JSON from query param
+ */
+function safeJSONParse(value, defaultValue = []) {
+  if (!value) return defaultValue;
+  if (Array.isArray(value)) return value;
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : defaultValue;
+  } catch (err) {
+    console.warn(`JSON parse error: ${err.message}`);
+    return defaultValue;
+  }
+}
+
+/**
+ * Safely get pagination params
+ */
+function getPaginationParams(searchParams) {
+  const start = Math.max(0, parseInt(searchParams.get("start") || "0", 10));
+  const size = Math.max(1, Math.min(100, parseInt(searchParams.get("size") || "10", 10)));
+  return { start, size };
+}
+
 export async function GET(request) {
+  let reviews = [];
+  let totalCount = 0;
+
   try {
     // 🔐 Firebase Auth check
     const auth = await authMiddleware(request, { requireAdmin: true });
@@ -12,55 +39,83 @@ export async function GET(request) {
 
     await connectDB();
 
+    // 📋 Extract and safely parse query parameters
     const searchParams = request.nextUrl.searchParams;
-    const start = parseInt(searchParams.get("start") || "0", 10);
-    const size = parseInt(searchParams.get("size") || "10", 10);
-    const filters = JSON.parse(searchParams.get("filters") || "[]");
-    const globalFilter = searchParams.get("globalFilter") || "";
-    const sorting = JSON.parse(searchParams.get("sorting") || "[]");
-    const deleteType = searchParams.get("deleteType");
+    const { start, size } = getPaginationParams(searchParams);
+    
+    const filtersParam = searchParams.get("filters") || "[]";
+    const filters = safeJSONParse(filtersParam, []);
+    
+    const sortingParam = searchParams.get("sorting") || "[]";
+    const sorting = safeJSONParse(sortingParam, []);
+    
+    const globalFilter = (searchParams.get("globalFilter") || "").trim();
+    const deleteType = searchParams.get("deleteType") || "SD";
 
-    // 🧠 Match query
+    // 🧠 Build match query with defensive defaults
     let matchQuery = {};
 
     // 🗑️ Delete logic
-    if (deleteType === "SD") {
-      matchQuery.deletedAt = null;
-    } else if (deleteType === "PD") {
+    if (deleteType === "PD") {
       matchQuery.deletedAt = { $ne: null };
     } else {
-      matchQuery.deletedAt = null;
+      matchQuery.deletedAt = null; // Default to SD (soft delete)
     }
 
-    // 🔍 Global search
-    if (globalFilter) {
-      matchQuery["$or"] = [
-        { "productData.name": { $regex: globalFilter, $options: "i" } },
-        { "userData.name": { $regex: globalFilter, $options: "i" } },
-        { rating: { $regex: globalFilter, $options: "i" } },
-        { review: { $regex: globalFilter, $options: "i" } },
-        { title: { $regex: globalFilter, $options: "i" } },
-      ];
+    // 🔍 Global search with defensive filter
+    if (globalFilter && globalFilter.length > 0) {
+      try {
+        matchQuery["$or"] = [
+          { "productData.name": { $regex: globalFilter, $options: "i" } },
+          { "userData.name": { $regex: globalFilter, $options: "i" } },
+          { rating: { $regex: globalFilter, $options: "i" } },
+          { review: { $regex: globalFilter, $options: "i" } },
+          { title: { $regex: globalFilter, $options: "i" } },
+        ];
+      } catch (err) {
+        console.warn("Global filter error:", err.message);
+      }
     }
 
-    // 🎯 Column filters
-    filters.forEach((filter) => {
-      if (filter.id === "product") {
-        matchQuery["productData.name"] = { $regex: filter.value, $options: "i" };
-      } else if (filter.id === "user") {
-        matchQuery["userData.name"] = { $regex: filter.value, $options: "i" };
-      } else {
-        matchQuery[filter.id] = { $regex: filter.value, $options: "i" };
-      }
-    });
+    // 🎯 Column filters with defensive handling
+    if (Array.isArray(filters) && filters.length > 0) {
+      filters.forEach((filter) => {
+        try {
+          if (!filter.id || !filter.value) return;
+          
+          const filterValue = String(filter.value).trim();
+          if (!filterValue) return;
+          
+          if (filter.id === "product") {
+            matchQuery["productData.name"] = { $regex: filterValue, $options: "i" };
+          } else if (filter.id === "user") {
+            matchQuery["userData.name"] = { $regex: filterValue, $options: "i" };
+          } else if (typeof filter.id === "string") {
+            matchQuery[filter.id] = { $regex: filterValue, $options: "i" };
+          }
+        } catch (err) {
+          console.warn(`Filter error for ${filter.id}:`, err.message);
+        }
+      });
+    }
 
-    // 🔃 Sorting
-    let sortQuery = {};
-    sorting.forEach((sort) => {
-      if (sort.id) {
-        sortQuery[sort.id] = sort.desc ? -1 : 1;
+    // 🔃 Build sorting object with defensive defaults
+    let sortQuery = { createdAt: -1 };
+    if (Array.isArray(sorting) && sorting.length > 0) {
+      sortQuery = {};
+      sorting.forEach((sort) => {
+        try {
+          if (sort.id && typeof sort.id === "string") {
+            sortQuery[sort.id] = sort.desc ? -1 : 1;
+          }
+        } catch (err) {
+          console.warn("Sort error:", err.message);
+        }
+      });
+      if (Object.keys(sortQuery).length === 0) {
+        sortQuery = { createdAt: -1 };
       }
-    });
+    }
 
     // 🧩 Aggregation pipeline with safe field values
     const pipeline = [
@@ -88,58 +143,64 @@ export async function GET(request) {
       },
       { $match: matchQuery },
       {
-        $sort: Object.keys(sortQuery).length ? sortQuery : { createdAt: -1 },
+        $sort: sortQuery,
       },
-      { $skip: start },
-      { $limit: size },
+      { $skip: Math.max(0, start) },
+      { $limit: Math.max(1, size) },
       {
         $project: {
           _id: { $toString: "$_id" },
-          product: {
-            $ifNull: ["$productData.name", "Unknown Product"],
-          },
-          user: {
-            $ifNull: ["$userData.name", "Unknown User"],
-          },
+          product: { $ifNull: ["$productData.name", "Unknown Product"] },
+          user: { $ifNull: ["$userData.name", "Unknown User"] },
           rating: { $ifNull: ["$rating", 0] },
           review: { $ifNull: ["$review", ""] },
           title: { $ifNull: ["$title", ""] },
           createdAt: { $ifNull: ["$createdAt", new Date()] },
           updatedAt: { $ifNull: ["$updatedAt", new Date()] },
-          deletedAt: "$deletedAt",
+          deletedAt: { $ifNull: ["$deletedAt", null] },
         },
       },
     ];
 
-    // 📦 Data fetch
-    const getReview = await ReviewModel.aggregate(pipeline);
-
-    // Build count query for total count
-    let countQuery = { deletedAt: null };
-    if (deleteType === "PD") {
-      countQuery.deletedAt = { $ne: null };
+    // 📦 Execute aggregation pipeline with defensive error handling
+    try {
+      reviews = await ReviewModel.aggregate(pipeline);
+      if (!Array.isArray(reviews)) {
+        reviews = [];
+      }
+    } catch (aggErr) {
+      console.error("Aggregation pipeline error:", aggErr.message);
+      reviews = [];
     }
 
-    // Apply filters to count query
-    filters.forEach((filter) => {
-      if (filter.id === "product") {
-        countQuery["productData.name"] = { $regex: filter.value, $options: "i" };
-      } else if (filter.id === "user") {
-        countQuery["userData.name"] = { $regex: filter.value, $options: "i" };
-      } else {
-        countQuery[filter.id] = { $regex: filter.value, $options: "i" };
+    // 🔢 Get total count with defensive query
+    try {
+      const countQuery = { deletedAt: deleteType === "PD" ? { $ne: null } : null };
+      totalCount = await ReviewModel.countDocuments(countQuery);
+      if (!Number.isInteger(totalCount) || totalCount < 0) {
+        totalCount = 0;
       }
-    });
+    } catch (countErr) {
+      console.error("Count error:", countErr.message);
+      totalCount = reviews.length;
+    }
 
-    const totalRowCount = await ReviewModel.countDocuments(countQuery);
-
+    // ✅ Safe response format
     return NextResponse.json({
       success: true,
-      data: getReview || [],
-      meta: { totalRowCount: totalRowCount || 0 },
+      rows: reviews || [],
+      total: totalCount || 0,
     });
   } catch (error) {
-    console.error("GET /api/review error:", error);
-    return catchError(error);
+    console.error("GET /api/review fatal error:", error);
+    return NextResponse.json(
+      {
+        success: false,
+        rows: [],
+        total: 0,
+        error: error?.message || "Internal server error",
+      },
+      { status: 500 }
+    );
   }
 }
