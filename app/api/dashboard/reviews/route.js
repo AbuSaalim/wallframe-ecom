@@ -5,13 +5,13 @@ import { authMiddleware } from "@/lib/authMiddleware";
 
 export async function GET(request) {
   try {
-    // Verify Firebase token and admin role
+    // 🔐 Firebase Auth check - verify admin role
     const auth = await authMiddleware(request, { requireAdmin: true });
     if (auth.isError) return auth.response;
 
     await connectDB();
     
-    // Fetch latest reviews with product and user information
+    // 📊 Fetch latest reviews with product and user information
     const latestReviews = await ReviewModel.aggregate([
       {
         $lookup: {
@@ -46,18 +46,30 @@ export async function GET(request) {
       { $limit: 5 },
       {
         $project: {
-          _id: 1,
-          productName: "$productData.name",
-          productImage: "$productData.image",
-          userName: "$userData.name",
-          rating: 1,
-          review: 1,
-          title: 1,
-          createdAt: 1,
+          _id: { $toString: "$_id" },
+          productName: {
+            $ifNull: ["$productData.name", "Unknown Product"],
+          },
+          productImage: {
+            $ifNull: ["$productData.image", ""],
+          },
+          userName: {
+            $ifNull: ["$userData.name", "Unknown User"],
+          },
+          rating: { $ifNull: ["$rating", 0] },
+          review: { $ifNull: ["$review", ""] },
+          title: { $ifNull: ["$title", ""] },
+          createdAt: { $ifNull: ["$createdAt", new Date()] },
         },
       },
     ]);
-    return response(true, 200, "Latest reviews fetched successfully", latestReviews);
+
+    return response(
+      true,
+      200,
+      "Latest reviews fetched successfully",
+      latestReviews || []
+    );
   } catch (error) {
     console.error("GET /api/dashboard/reviews error:", error);
     return catchError(error);
