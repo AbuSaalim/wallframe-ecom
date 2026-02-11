@@ -34,6 +34,21 @@ interface RootLayoutProps {
   children: React.ReactNode
 }
 
+/**
+ * RootLayout
+ * 
+ * FIX FOR DUPLICATE FOOTER:
+ * 1. The Footer is rendered ONLY here in the root layout.
+ * 2. It is placed outside the <main> tag but inside the flex wrapper to ensure it stays at the bottom.
+ * 3. No other layout file (e.g., app/(root)/(website)/layout.tsx) should render <Footer />.
+ * 4. No individual page (e.g., app/page.tsx) should render <Footer />.
+ * 
+ * Structure:
+ * - Providers (Redux, Theme, etc.)
+ * - Navbar (Sticky top)
+ * - Main (Flex-1 to push footer down)
+ * - Footer (Global footer)
+ */
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html
@@ -44,17 +59,25 @@ export default function RootLayout({ children }: RootLayoutProps) {
       <body className="min-h-screen bg-background font-sans antialiased text-foreground">
         <RootProvider>
           <div className="flex flex-col min-h-screen">
-            {/* Navigation */}
+            {/* 
+              Navbar is rendered once here at the root level.
+              It is sticky by default (handled in Navbar component).
+            */}
             <Navbar />
 
-            {/* Main Content */}
+            {/* 
+              Main Content Area 
+              flex-1 ensures it takes up remaining space, pushing footer to bottom 
+              if content is short.
+            */}
             <main className="flex-1 w-full">
-              <div className="px-4 sm:px-6 lg:px-12">
-                {children}
-              </div>
+              {children}
             </main>
 
-            {/* Footer */}
+            {/* 
+              Footer is rendered ONCE here. 
+              Do not add <Footer /> to any other layout or page.
+            */}
             <Footer />
           </div>
         </RootProvider>
