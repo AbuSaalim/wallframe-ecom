@@ -78,14 +78,23 @@ export default function ProductCard({ product }: ProductCardProps) {
           </h3>
         </Link>
 
-        {/* Rating Placeholder (Static for now as not in schema) */}
+        {/* Rating */}
         <div className="flex items-center gap-1 mb-1">
            <div className="flex text-yellow-500">
              {[...Array(5)].map((_, i) => (
-               <Star key={i} className={`w-3 h-3 ${i < 4 ? 'fill-current' : 'text-gray-300'}`} />
+               <Star 
+                key={i} 
+                className={`w-3 h-3 ${
+                  i < Math.round(product.averageRating || 0) 
+                    ? 'fill-current' 
+                    : 'text-gray-300'
+                }`} 
+              />
              ))}
            </div>
-           <span className="text-xs text-muted-foreground">(24)</span>
+           <span className="text-xs text-muted-foreground">
+             ({product.totalReviews || 0})
+           </span>
         </div>
 
         {/* Pricing */}

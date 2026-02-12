@@ -21,12 +21,22 @@ export interface Product {
     discountPercentage: number;
     media: Media[];
     category: Category;
+    averageRating?: number; // Added
+    totalReviews?: number; // Added
     createdAt: string;
     updatedAt: string;
+}
+
+export interface Pagination {
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
 }
 
 export interface ProductApiResponse {
     success: boolean;
     data: Product[];
-    count: number;
+    count?: number;
+    pagination?: Pagination;
 }
