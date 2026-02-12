@@ -20,6 +20,7 @@ export interface ProductVariant {
     sellingPrice: number;
     discountPercentage: number;
     sku: string;
+    stock?: number;
     media: Media[];
     deletedAt?: Date | null;
 }

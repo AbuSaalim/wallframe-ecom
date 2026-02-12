@@ -1,7 +1,7 @@
 'use client'
 
-import React, { ReactNode } from 'react'
-import { Provider } from 'react-redux'
+import React, { ReactNode, useEffect } from 'react'
+import { Provider, useDispatch } from 'react-redux'
 import { PersistGate } from 'redux-persist/integration/react'
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
@@ -9,6 +9,7 @@ import { ThemeProvider } from 'next-themes'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { store, persistor } from '@/store/store'
+import { initializeCart } from '@/store/reducer/cartStore'
 
 // Create a client for react-query
 const queryClient = new QueryClient({
@@ -29,6 +30,17 @@ interface RootProviderProps {
   children: ReactNode
 }
 
+// Cart initializer component
+function CartInitializer() {
+  const dispatch = useDispatch()
+  
+  useEffect(() => {
+    dispatch(initializeCart())
+  }, [dispatch])
+  
+  return null
+}
+
 /**
  * Root Provider Component
  * Wraps the entire app with all necessary providers:
@@ -41,6 +53,7 @@ export default function RootProvider({ children }: RootProviderProps) {
   return (
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
+        <CartInitializer />
         <QueryClientProvider client={queryClient}>
           <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
             {children}

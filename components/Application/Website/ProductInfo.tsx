@@ -6,6 +6,10 @@ import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { Heart, Share2, Star, Truck, ShieldCheck } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useDispatch } from 'react-redux'
+import { addToCart } from '@/store/reducer/cartStore'
+import { generateCartItemId } from '@/lib/cart/localStorage'
+import { toast } from 'react-toastify'
 
 interface ProductInfoProps {
   product: Product
@@ -14,6 +18,8 @@ interface ProductInfoProps {
 }
 
 export default function ProductInfo({ product, variants, onVariantChange }: ProductInfoProps) {
+  const dispatch = useDispatch()
+  
   // Extract unique colors and sizes
   const uniqueColors = Array.from(new Set(variants.map(v => v.color))).filter(Boolean)
   const uniqueSizes = Array.from(new Set(variants.map(v => v.size))).filter(Boolean)
@@ -41,12 +47,25 @@ export default function ProductInfo({ product, variants, onVariantChange }: Prod
   // Handle Add to Cart
   const handleAddToCart = () => {
     if (!currentVariant) {
-      alert('Please select a valid combination')
-      return // Or show toast
+      toast.error('Please select a valid combination')
+      return
     }
-    console.log('Adding to cart:', { product, variant: currentVariant })
-    // Dispatch to redux/context here
-    alert(`Added ${product.name} (${selectedColor}, ${selectedSize}) to cart!`)
+
+    const cartItem = {
+      productId: product._id,
+      productSlug: product.slug,
+      variantId: currentVariant._id,
+      name: product.name,
+      image: currentVariant.media?.[0]?.secure_url || product.media?.[0]?.secure_url || '',
+      color: currentVariant.color,
+      size: currentVariant.size,
+      price: currentVariant.sellingPrice,
+      quantity: 1,
+      stock: currentVariant.stock || 0
+    }
+
+    dispatch(addToCart(cartItem))
+    toast.success(`Added ${product.name} to cart!`)
   }
 
   return (
