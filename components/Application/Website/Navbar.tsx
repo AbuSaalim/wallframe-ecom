@@ -43,11 +43,11 @@ export default function Navbar() {
           {/* Right Side Actions */}
           <div className="flex items-center gap-4">
             {auth?.email ? (
-              <Button variant="outline" size="sm">
-                Account
+              <Button asChild variant="outline" size="sm" className="">
+                <Link href="/my-account">Account</Link>
               </Button>
             ) : (
-              <Button asChild size="sm">
+              <Button asChild variant="default" size="sm" className="">
                 <Link href={WEBSITE_LOGIN()}>Sign In</Link>
               </Button>
             )}

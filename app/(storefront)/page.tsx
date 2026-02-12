@@ -38,8 +38,8 @@ export default function Home() {
             inspired by the royal heritage of House of Kari.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-white text-black hover:bg-white/90 text-base px-10 py-7 rounded-full font-medium transition-transform active:scale-95 shadow-xl border border-white">
-              Explore Collection
+            <Button asChild variant="default" size="lg" className="bg-white text-black hover:bg-white/90 text-base px-10 py-7 rounded-full font-medium transition-transform active:scale-95 shadow-xl border border-white">
+              <Link href="/shop">Explore Collection</Link>
             </Button>
           </div>
         </div>
@@ -70,8 +70,8 @@ export default function Home() {
               We believe in sustainable luxury that honors tradition.
             </p>
             <div className="pt-4">
-              <Button variant="outline" size="lg" className="border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white transition-colors uppercase tracking-widest text-xs h-14 px-10 rounded-full">
-                Read Our Story
+              <Button asChild variant="outline" size="lg" className="border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white transition-colors uppercase tracking-widest text-xs h-14 px-10 rounded-full">
+                <Link href="/about">Read Our Story</Link>
               </Button>
             </div>
           </div>

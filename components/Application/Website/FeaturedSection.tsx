@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
 import { Product, ProductApiResponse } from '@/types/product'
@@ -59,7 +60,7 @@ export default function FeaturedSection() {
           <p className="text-gray-500 mb-6">
             We're having trouble fetching the latest collection. Please try again later.
           </p>
-          <Button variant="outline" onClick={() => window.location.reload()}>
+          <Button variant="outline" size="sm" className="" onClick={() => window.location.reload()}>
             Retry
           </Button>
         </div>
@@ -104,8 +105,8 @@ export default function FeaturedSection() {
 
         {/* View All Button */}
         <div className="flex justify-center mt-12">
-          <Button variant="outline" size="lg" className="rounded-full px-8 border-primary/20 hover:bg-primary hover:text-white transition-all duration-300">
-            View All Products
+          <Button asChild variant="outline" size="lg" className="rounded-full px-8 border-primary/20 hover:bg-primary hover:text-white transition-all duration-300">
+            <Link href="/shop">View All Products</Link>
           </Button>
         </div>
 
