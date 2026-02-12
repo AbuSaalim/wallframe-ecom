@@ -11,6 +11,19 @@ export interface Category {
     slug: string;
 }
 
+export interface ProductVariant {
+    _id: string;
+    product: string;
+    color: string;
+    size: string;
+    mrp: number;
+    sellingPrice: number;
+    discountPercentage: number;
+    sku: string;
+    media: Media[];
+    deletedAt?: Date | null;
+}
+
 export interface Product {
     _id: string;
     name: string;
@@ -21,8 +34,9 @@ export interface Product {
     discountPercentage: number;
     media: Media[];
     category: Category;
-    averageRating?: number; // Added
-    totalReviews?: number; // Added
+    variants?: ProductVariant[];
+    averageRating?: number;
+    totalReviews?: number;
     createdAt: string;
     updatedAt: string;
 }
