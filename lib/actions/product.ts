@@ -11,9 +11,10 @@ import ReviewModel from "@/models/Review.model";
  */
 export async function getProductBySlug(slug: string) {
     try {
+        console.log(`[getProductBySlug] Fetching product for slug: ${slug}`);
         await connectDB();
 
-        // Register models to ensure population work if not already registered
+        // Register models
         if (!MediaModel) console.log("MediaModel needed for population");
         if (!CategoryModel) console.log("CategoryModel needed for population");
         if (!ProductVariantModel) console.log("ProductVariantModel needed for lookup");
@@ -26,15 +27,20 @@ export async function getProductBySlug(slug: string) {
             .lean();
 
         if (!product) {
-            return null; // Return null if not found
+            console.log(`[getProductBySlug] Product not found for slug: ${slug}`);
+            return null;
         }
+
+        console.log(`[getProductBySlug] Found product: ${product._id}`);
 
         // 2. Fetch Variants
         const variants = await ProductVariantModel.find({ product: product._id, deletedAt: null })
             .populate('media', 'secure_url alt title')
             .lean();
 
-        // 3. Aggregate Reviews for this product
+        console.log(`[getProductBySlug] Found ${variants.length} variants`);
+
+        // 3. Aggregate Reviews
         const reviewAgg = await ReviewModel.aggregate([
             { $match: { product: product._id, deletedAt: null } },
             {
@@ -56,7 +62,7 @@ export async function getProductBySlug(slug: string) {
             totalReviews: stats.totalReviews
         };
 
-        return JSON.parse(JSON.stringify(productData)); // Ensure serialization for Server Components
+        return JSON.parse(JSON.stringify(productData));
 
     } catch (error) {
         console.error("Error in getProductBySlug:", error);
