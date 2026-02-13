@@ -2,6 +2,7 @@
 
 import React from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { WEBSITE_HOME, WEBSITE_LOGIN } from '@/routes/WebsiteRoute'
 import { Button } from '@/components/ui/button'
 import { useSelector, useDispatch } from 'react-redux'
@@ -28,8 +29,14 @@ export default function Navbar() {
         <div className="px-4 sm:px-6 lg:px-12 py-4">
           <div className="flex items-center justify-between">
             {/* Logo */}
-            <Link href={WEBSITE_HOME()} className="text-2xl font-bold text-foreground hover:text-primary transition">
-              Rafey
+            <Link href={WEBSITE_HOME()} className="relative h-10 w-32 md:h-12 md:w-40 transition-opacity hover:opacity-80">
+              <Image
+                src="/assets/images/logo.png"
+                alt="Rafey Logo"
+                fill
+                className="object-contain"
+                priority
+              />
             </Link>
 
             {/* Center Navigation Links */}
