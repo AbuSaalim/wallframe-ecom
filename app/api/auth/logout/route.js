@@ -1,16 +1,38 @@
+import { NextResponse } from 'next/server';
 import { response } from '@/lib/helperFunction';
 
 export async function POST(request) {
   try {
-    // Clear authentication by removing the token cookie
-    const res = response(true, 200, 'Logged out successfully', null);
-    
-    // Clear the Firebase token cookie (if using cookies)
-    res.cookies.delete('firebase-token');
-    
+    // Create response
+    const res = NextResponse.json(
+      { success: true, message: 'Logged out successfully' },
+      { status: 200 }
+    );
+
+    // Clear the auth token cookie
+    res.cookies.set('authToken', '', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 0, // Expire immediately
+      path: '/',
+    });
+
+    // Clear the user role cookie
+    res.cookies.set('userRole', '', {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 0, // Expire immediately
+      path: '/',
+    });
+
     return res;
   } catch (error) {
     console.error('Logout error:', error);
-    return response(false, 500, 'Logout failed', null);
+    return NextResponse.json(
+      { success: false, message: 'Logout failed' },
+      { status: 500 }
+    );
   }
 }

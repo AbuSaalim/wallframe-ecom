@@ -13,9 +13,11 @@ import { showToast } from "@/lib/showToast";
 import { useRouter } from "next/navigation";
 import { FaRegEyeSlash, FaRegEye } from "react-icons/fa";
 import { auth } from "@/lib/firebase";
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, getIdToken } from "firebase/auth";
 import { getUserRoleFromAPI } from "@/lib/clientRoleHelpers";
 import axios from "axios";
+import { useDispatch } from "react-redux";
+import { login } from "@/store/reducer/authReducer";
 
 const LoginPage = () => {
   const [loading, setLoading] = useState(false);
@@ -23,6 +25,34 @@ const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const router = useRouter();
+  const dispatch = useDispatch();
+
+  // Function to set auth cookie and dispatch to Redux
+  const handleAuthSuccess = async (user, userRole) => {
+    try {
+      // Get Firebase ID token
+      const idToken = await getIdToken(user);
+      
+      // Set auth cookie for middleware
+      await axios.post("/api/auth/set-cookie", {
+        idToken,
+        email: user.email,
+        role: userRole
+      });
+
+      // Dispatch user data to Redux
+      dispatch(login({
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName,
+        emailVerified: user.emailVerified,
+        role: userRole,
+        name: user.displayName || user.email.split("@")[0]
+      }));
+    } catch (error) {
+      console.error("Error setting auth cookie:", error);
+    }
+  };
 
   const handleGoogleSignIn = async () => {
     try {
@@ -43,6 +73,9 @@ const LoginPage = () => {
 
       // Fetch user role
       const userRole = await getUserRoleFromAPI(userCredential.user.email);
+      
+      // Set auth cookie and dispatch to Redux
+      await handleAuthSuccess(userCredential.user, userRole);
       
       showToast("success", "Login successful!");
       
@@ -73,6 +106,9 @@ const LoginPage = () => {
       
       // Fetch user role from API (client-safe)
       const userRole = await getUserRoleFromAPI(email);
+      
+      // Set auth cookie and dispatch to Redux
+      await handleAuthSuccess(userCredential.user, userRole);
       
       showToast("success", "Login successful!");
       

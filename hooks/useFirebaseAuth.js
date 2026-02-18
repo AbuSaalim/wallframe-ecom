@@ -4,6 +4,7 @@ import { onAuthChange, logout as firebaseLogout } from '@/lib/authService'
 import { useRouter } from 'next/navigation'
 import { useDispatch } from 'react-redux'
 import { login, logout } from '@/store/reducer/authReducer'
+import { getUserRoleFromAPI } from '@/lib/clientRoleHelpers'
 
 /**
  * useFirebaseAuth hook
@@ -17,15 +18,18 @@ export const useFirebaseAuth = () => {
   const router = useRouter()
 
   useEffect(() => {
-    const unsubscribe = onAuthChange((authUser) => {
+    const unsubscribe = onAuthChange(async (authUser) => {
       if (authUser) {
-        // User is logged in
+        // Fetch user role from API
+        const userRole = await getUserRoleFromAPI(authUser.email);
+        
+        // User is logged in with correct role from database
         const userData = {
           uid: authUser.uid,
           email: authUser.email,
           displayName: authUser.displayName,
           emailVerified: authUser.emailVerified,
-          role: 'user'
+          role: userRole
         }
         setUser(userData)
         dispatch(login(userData))
