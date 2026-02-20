@@ -21,7 +21,7 @@ import { LoginSchema } from "@/lib/zodSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { showToast } from "@/lib/showToast";
-import axios from "axios";
+import apiClient from "@/lib/apiClient";
 import useFetch from "@/hooks/useFetch";
 import { z } from "zod";
 
@@ -93,7 +93,7 @@ const EditCoupon = ({ params }) => {
 
       console.log('Submitting payload:', payload);
 
-      const { data: response } = await axios.put(
+      const { data: response } = await apiClient.put(
         "/api/coupon/update",
         payload
       );

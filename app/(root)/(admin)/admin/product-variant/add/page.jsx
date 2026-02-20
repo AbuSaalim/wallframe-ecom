@@ -21,7 +21,7 @@ import { LoginSchema } from "@/lib/zodSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { showToast } from "@/lib/showToast";
-import axios from "axios";
+import apiClient from "@/lib/apiClient";
 import useFetch from "@/hooks/useFetch";
 import Select from "@/components/Application/Select";
 import MediaModal from "@/components/Application/Admin/MediaModal";
@@ -132,7 +132,7 @@ const AddProductVariant = () => {
 
       console.log('Submitting values:', values);
 
-      const { data: response } = await axios.post(
+      const { data: response } = await apiClient.post(
         "/api/product-variant/create",
         values
       );

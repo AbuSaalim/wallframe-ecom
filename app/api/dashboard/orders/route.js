@@ -1,68 +1,54 @@
 import { connectDB } from "@/lib/detabaseConnection";
 import { catchError, response } from "@/lib/helperFunction";
 import { authMiddleware } from "@/lib/authMiddleware";
+import OrderModel from "@/models/Order.model";
 
-// Dynamic mock data generator
-const generateMockOrders = () => [
-  {
-    _id: "ORD-001-2025",
-    orderId: "#ORD-001",
-    paymentId: "PAY-2025-001",
-    items: 3,
-    status: "completed",
-    amount: 2500,
-    createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-  },
-  {
-    _id: "ORD-002-2025",
-    orderId: "#ORD-002",
-    paymentId: "PAY-2025-002",
-    items: 2,
-    status: "pending",
-    amount: 1800,
-    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-  },
-  {
-    _id: "ORD-003-2025",
-    orderId: "#ORD-003",
-    paymentId: "PAY-2025-003",
-    items: 5,
-    status: "completed",
-    amount: 4200,
-    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-  },
-  {
-    _id: "ORD-004-2025",
-    orderId: "#ORD-004",
-    paymentId: "PAY-2025-004",
-    items: 1,
-    status: "cancelled",
-    amount: 1200,
-    createdAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
-  },
-  {
-    _id: "ORD-005-2025",
-    orderId: "#ORD-005",
-    paymentId: "PAY-2025-005",
-    items: 4,
-    status: "completed",
-    amount: 3500,
-    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-  },
-];
+// GET /api/dashboard/orders - Get latest orders for dashboard (admin only)
 export async function GET(request) {
   try {
+    console.log("[DASHBOARD ORDERS API] Request received");
+    
     // Verify Firebase token and admin role
+    console.log("[DASHBOARD ORDERS API] Verifying authentication (admin required)...");
     const auth = await authMiddleware(request, { requireAdmin: true });
-    if (auth.isError) return auth.response;
+    if (auth.isError) {
+      console.log("[DASHBOARD ORDERS API] Auth failed:", auth.response);
+      return auth.response;
+    }
+    console.log("[DASHBOARD ORDERS API] Auth successful, user:", auth.user.email, "role:", auth.user.role);
 
     await connectDB();
+    console.log("[DASHBOARD ORDERS API] Database connected");
     
-    // TODO: Replace with actual Order model query when available
-    const latestOrders = generateMockOrders();
-    return response(true, 200, "Latest orders fetched successfully", latestOrders);
+    // Fetch latest orders from database
+    console.log("[DASHBOARD ORDERS API] Fetching latest orders...");
+    const latestOrders = await OrderModel.find({ isDeleted: false })
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .select('orderId payment status items subtotal total createdAt email')
+      .lean();
+    
+    console.log("[DASHBOARD ORDERS API] Found orders:", latestOrders.length);
+
+    // Transform data for frontend
+    const transformedOrders = latestOrders.map(order => ({
+      _id: order._id,
+      orderId: order.orderId,
+      paymentId: order.payment?.transactionId || `PAY-${order.orderId.replace('ORD-', '')}`,
+      items: order.items?.length || 0,
+      status: order.status,
+      amount: order.total,
+      subtotal: order.subtotal,
+      total: order.total,
+      email: order.email,
+      createdAt: order.createdAt,
+      paymentStatus: order.payment?.status || 'pending'
+    }));
+
+    console.log("[DASHBOARD ORDERS API] Returning transformed orders:", transformedOrders.length);
+    return response(true, 200, "Latest orders fetched successfully", transformedOrders);
   } catch (error) {
-    console.error("GET /api/dashboard/orders error:", error);
+    console.error("[DASHBOARD ORDERS API] error:", error);
     return catchError(error);
   }
 }

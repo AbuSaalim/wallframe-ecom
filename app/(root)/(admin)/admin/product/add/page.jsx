@@ -21,7 +21,7 @@ import { LoginSchema } from "@/lib/zodSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { showToast } from "@/lib/showToast";
-import axios from "axios";
+import apiClient from "@/lib/apiClient";
 import useFetch from "@/hooks/useFetch";
 import Select from "@/components/Application/Select";
 import dynamic from "next/dynamic";
@@ -139,7 +139,7 @@ const [selectedMedia, setSelectedMedia] = useState([])
       const mediaIds = selectedMedia.map(media => media._id)
       values.media = mediaIds
 
-      const { data: response } = await axios.post(
+      const { data: response } = await apiClient.post(
         "/api/product/create",
         (values)
       );

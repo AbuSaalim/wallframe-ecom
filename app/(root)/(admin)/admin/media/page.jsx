@@ -6,7 +6,7 @@ import BreadCrumb from '@/components/Application/Admin/BreadCrumb'
 import UploadMedia from '@/components/Application/Admin/UploadMedia'
 import { ADMIN_DASHBOARD, ADMIN_MEDIA_SHOW } from '@/routes/AdminPanelRoute'
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
-import axios from 'axios'
+import apiClient from '@/lib/apiClient'
 import { CardContent } from '@/components/ui/card'
 import Media from '@/components/Application/Admin/Media'
 import { Button } from '@/components/ui/button'
@@ -42,7 +42,7 @@ const MediaPage = () => {
   }, [searchParams])
 
   const fetchMedia = async (page, deleteType) => {
-    const {data: response} = await axios.get(`/api/media?page=${page}&limit=10&deleteType=${deleteType}`)
+    const {data: response} = await apiClient.get(`/api/media?page=${page}&limit=10&deleteType=${deleteType}`)
 
     return response
   }

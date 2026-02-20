@@ -13,8 +13,8 @@ import { LoginSchema } from '@/lib/zodSchema';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { showToast } from '@/lib/showToast';
-import axios from 'axios';
-import useFetch from '@/hooks/useFetch';  // ✅ Import useFetch
+import apiClient from '@/lib/apiClient';
+import useFetch from '@/hooks/useFetch';
 
 const breadcrumbData = [
   { href: ADMIN_DASHBOARD, label: 'Home' },
@@ -87,7 +87,7 @@ const EditCategory = ({ params }) => {
       setLoading(true);
 
       // ✅ FIXED: Removed extra }
-      const { data: response } = await axios.put('/api/category/update', values);
+      const { data: response } = await apiClient.put('/api/category/update', values);
 
       if (!response.success) {
         throw new Error(response.message);

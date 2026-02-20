@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ADMIN_DASHBOARD } from "@/routes/AdminPanelRoute"
-import axios from 'axios'
+import apiClient from '@/lib/apiClient'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { Search, TrendingUp, Package, Users, ShoppingCart, Star, ArrowUpRight } from 'lucide-react'
 
@@ -73,7 +73,7 @@ const Dashboard = () => {
         
         // Fetch stats
         try {
-          const statsRes = await axios.get('/api/dashboard/stats')
+          const statsRes = await apiClient.get('/api/dashboard/stats')
           if (statsRes.data.success) {
             setStats(statsRes.data.data)
           }
@@ -84,7 +84,9 @@ const Dashboard = () => {
 
         // Fetch orders
         try {
-          const ordersRes = await axios.get('/api/dashboard/orders')
+          console.log('[DASHBOARD] Fetching orders...')
+          const ordersRes = await apiClient.get('/api/dashboard/orders')
+          console.log('[DASHBOARD] Orders response:', ordersRes.data)
           if (ordersRes.data.success) {
             setLatestOrders(ordersRes.data.data || [])
           }
@@ -95,7 +97,7 @@ const Dashboard = () => {
 
         // Fetch reviews
         try {
-          const reviewsRes = await axios.get('/api/dashboard/reviews')
+          const reviewsRes = await apiClient.get('/api/dashboard/reviews')
           if (reviewsRes.data.success) {
             setLatestReviews(reviewsRes.data.data || [])
           }

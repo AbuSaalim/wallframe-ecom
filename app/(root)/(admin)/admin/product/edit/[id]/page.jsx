@@ -21,7 +21,7 @@ import { LoginSchema } from "@/lib/zodSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { showToast } from "@/lib/showToast";
-import axios from "axios";
+import apiClient from "@/lib/apiClient";
 import useFetch from "@/hooks/useFetch";
 import Select from "@/components/Application/Select";
 import dynamic from "next/dynamic";
@@ -206,7 +206,7 @@ const EditProduct = ({ params }) => {
     console.log('Submitting payload:', payload);
 
     // ✅ CHANGED: Remove /${id} from URL, send _id in body instead
-    const { data: response } = await axios.put(
+    const { data: response } = await apiClient.put(
       '/api/product/update',  // Changed from `/api/product/update/${id}`
       payload
     );

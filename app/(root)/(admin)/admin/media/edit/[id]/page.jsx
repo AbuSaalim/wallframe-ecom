@@ -12,7 +12,7 @@ import { LoginSchema } from '@/lib/zodSchema';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import Image from 'next/image';
-import axios from 'axios';
+import apiClient from '@/lib/apiClient';
 import { showToast } from '@/lib/showToast';
 
 const breadcrumbData = [
@@ -57,7 +57,7 @@ const EditMedia = ({ params }) => {
   const onSubmit = async (values) => {
     try {
       setLoading(true);
-      const { data: response } = await axios.put('/api/media/update', values);
+      const { data: response } = await apiClient.put('/api/media/update', values);
 
       if (!response.success) {
         throw new Error(response.message);

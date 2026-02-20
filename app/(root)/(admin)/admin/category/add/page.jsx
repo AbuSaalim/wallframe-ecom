@@ -13,7 +13,7 @@ import { LoginSchema } from '@/lib/zodSchema';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { showToast } from '@/lib/showToast';
-import axios from 'axios';
+import apiClient from '@/lib/apiClient';
 
 const breadcrumbData = [
   { href: ADMIN_DASHBOARD, label: 'Home' },
@@ -66,7 +66,7 @@ const AddCategory = () => {
     try {
       setLoading(true);
 
-      const { data: response } = await axios.post('/api/category/create', values)
+      const { data: response } = await apiClient.post('/api/category/create', values)
 
       if (!response.success) {
         throw new Error(response.message)
