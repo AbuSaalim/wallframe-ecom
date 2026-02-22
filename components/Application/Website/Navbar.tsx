@@ -1,13 +1,17 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { WEBSITE_HOME, WEBSITE_LOGIN } from '@/routes/WebsiteRoute'
 import { Button } from '@/components/ui/button'
 import { useSelector, useDispatch } from 'react-redux'
-import { ShoppingCart } from 'lucide-react'
+import { ShoppingCart, LogOut, User } from 'lucide-react'
 import { toggleDrawer } from '@/store/reducer/cartStore'
+import { logout } from '@/store/reducer/authReducer'
+import axios from 'axios'
+import { showToast } from '@/lib/showToast'
+import { useRouter } from 'next/navigation'
 import CartDrawer from './CartDrawer'
 
 /**
@@ -20,8 +24,32 @@ import CartDrawer from './CartDrawer'
  */
 export default function Navbar() {
   const dispatch = useDispatch()
+  const router = useRouter()
   const auth = useSelector((store: any) => store.authStore?.auth)
   const { totalItems } = useSelector((store: any) => store.cartStore)
+  const [loggingOut, setLoggingOut] = useState(false)
+
+  const handleLogout = async () => {
+    try {
+      setLoggingOut(true)
+      
+      // Call logout API
+      await axios.post('/api/auth/logout')
+      
+      // Dispatch logout to Redux
+      dispatch(logout())
+      
+      showToast('success', 'Logged out successfully')
+      
+      // Redirect to home
+      router.push(WEBSITE_HOME())
+    } catch (error) {
+      console.error('Logout error:', error)
+      showToast('error', 'Logout failed')
+    } finally {
+      setLoggingOut(false)
+    }
+  }
 
   return (
     <>
@@ -72,9 +100,23 @@ export default function Navbar() {
               </button>
 
               {auth?.email ? (
-                <Button asChild variant="outline" size="sm" className="">
-                  <Link href="/my-account">Account</Link>
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button asChild variant="outline" size="sm" className="">
+                    <Link href="/my-account">
+                      <User className="h-4 w-4 mr-2" />
+                      Account
+                    </Link>
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={handleLogout}
+                    disabled={loggingOut}
+                    title="Logout"
+                  >
+                    <LogOut className="h-4 w-4" />
+                  </Button>
+                </div>
               ) : (
                 <Button asChild variant="default" size="sm" className="">
                   <Link href={WEBSITE_LOGIN()}>Sign In</Link>

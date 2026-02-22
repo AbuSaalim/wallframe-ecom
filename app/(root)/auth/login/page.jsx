@@ -5,15 +5,11 @@ import React, { useState } from "react";
 import Logo from "@/public/assets/images/logo-black.png";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import Buttonloading from "@/components/Application/Buttonloading";
-import Link from "next/link";
-import { WEBSITE_REGISTER, WEBSITE_RESET_PASSWORD } from "@/routes/WebsiteRoute";
 import { showToast } from "@/lib/showToast";
 import { useRouter } from "next/navigation";
-import { FaRegEyeSlash, FaRegEye } from "react-icons/fa";
 import { auth } from "@/lib/firebase";
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, getIdToken } from "firebase/auth";
+import { signInWithPopup, GoogleAuthProvider, getIdToken } from "firebase/auth";
 import { getUserRoleFromAPI } from "@/lib/clientRoleHelpers";
 import axios from "axios";
 import { useDispatch } from "react-redux";
@@ -21,9 +17,6 @@ import { login } from "@/store/reducer/authReducer";
 
 const LoginPage = () => {
   const [loading, setLoading] = useState(false);
-  const [isTypePassword, setIsTypePassword] = useState(true);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const router = useRouter();
   const dispatch = useDispatch();
 
@@ -92,50 +85,6 @@ const LoginPage = () => {
     }
   };
 
-  const handleLoginSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (!email || !password) {
-      showToast("error", "Please fill in all fields");
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      
-      // Fetch user role from API (client-safe)
-      const userRole = await getUserRoleFromAPI(email);
-      
-      // Set auth cookie and dispatch to Redux
-      await handleAuthSuccess(userCredential.user, userRole);
-      
-      showToast("success", "Login successful!");
-      
-      // Redirect based on role
-      const redirectPath = userRole === "admin" ? "/admin/dashboard" : "/";
-      setTimeout(() => {
-        router.push(redirectPath);
-      }, 1500);
-    } catch (error) {
-      let errorMessage = "Login failed";
-      
-      if (error.code === "auth/user-not-found") {
-        errorMessage = "User not found";
-      } else if (error.code === "auth/wrong-password") {
-        errorMessage = "Incorrect password";
-      } else if (error.code === "auth/invalid-email") {
-        errorMessage = "Invalid email";
-      } else if (error.code === "auth/user-disabled") {
-        errorMessage = "User account is disabled";
-      }
-      
-      showToast("error", errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div>
       <Card className="">
@@ -156,74 +105,13 @@ const LoginPage = () => {
           </div>
 
           <div className="mt-5">
-            <form onSubmit={handleLoginSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Email</label>
-                <Input
-                  type="email"
-                  placeholder="Enter your email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={loading}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">Password</label>
-                <div className="relative">
-                  <Input
-                    type={isTypePassword ? "password" : "text"}
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    disabled={loading}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setIsTypePassword(!isTypePassword)}
-                    className="absolute right-3 top-3"
-                    disabled={loading}
-                  >
-                    {isTypePassword ? <FaRegEyeSlash /> : <FaRegEye />}
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex justify-between items-center">
-                <label className="flex items-center">
-                  <input type="checkbox" className="mr-2" />
-                  Remember me
-                </label>
-                <Link href={WEBSITE_RESET_PASSWORD()} className="text-blue-600 hover:underline text-sm">
-                  Forgot Password?
-                </Link>
-              </div>
-
-              {loading ? (
-                <Buttonloading loadingText="Signing in..." />
-              ) : (
-                <Button type="submit" className="w-full">
-                  Sign In
-                </Button>
-              )}
-            </form>
-
-            <div className="mt-6">
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300"></div>
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-gray-500">Or continue with</span>
-                </div>
-              </div>
-
+            {loading ? (
+              <Buttonloading loadingText="Signing in..." />
+            ) : (
               <Button
                 type="button"
                 onClick={handleGoogleSignIn}
-                disabled={loading}
-                variant="outline"
-                className="w-full mt-4 flex items-center justify-center gap-2"
+                className="w-full flex items-center justify-center gap-2"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -231,18 +119,9 @@ const LoginPage = () => {
                   <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
                   <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
                 </svg>
-                Google
+                Continue with Google
               </Button>
-            </div>
-
-            <div className="mt-4 text-center">
-              <p className="text-sm">
-                Don't have an account?{" "}
-                <Link href={WEBSITE_REGISTER()} className="text-blue-600 hover:underline">
-                  Register here
-                </Link>
-              </p>
-            </div>
+            )}
           </div>
         </CardContent>
       </Card>

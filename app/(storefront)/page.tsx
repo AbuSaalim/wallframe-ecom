@@ -25,7 +25,7 @@ export default function Home() {
       sellingPrice: 2999,
       mrp: 4999,
       discountPercentage: 40,
-      media: [{ _id: '1', secure_url: '/placeholder.png', alt: 'Islamic Wall Frame', title: 'Frame 1' }],
+      media: [{ _id: '1', secure_url: '/assets/images/advertising-banner.png', alt: 'Islamic Wall Frame', title: 'Frame 1' }],
       category: { _id: '1', name: 'Wall Frames', slug: 'wall-frames' },
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
@@ -38,7 +38,7 @@ export default function Home() {
       sellingPrice: 3499,
       mrp: 5999,
       discountPercentage: 42,
-      media: [{ _id: '2', secure_url: '/placeholder.png', alt: 'Islamic Wall Frame', title: 'Frame 2' }],
+      media: [{ _id: '2', secure_url: '/assets/images/advertising-banner.png', alt: 'Islamic Wall Frame', title: 'Frame 2' }],
       category: { _id: '1', name: 'Wall Frames', slug: 'wall-frames' },
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
@@ -51,7 +51,7 @@ export default function Home() {
       sellingPrice: 4999,
       mrp: 7999,
       discountPercentage: 38,
-      media: [{ _id: '3', secure_url: '/placeholder.png', alt: 'Islamic Wall Frame', title: 'Frame 3' }],
+      media: [{ _id: '3', secure_url: '/assets/images/advertising-banner.png', alt: 'Islamic Wall Frame', title: 'Frame 3' }],
       category: { _id: '1', name: 'Wall Frames', slug: 'wall-frames' },
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
@@ -64,7 +64,7 @@ export default function Home() {
       sellingPrice: 2799,
       mrp: 4499,
       discountPercentage: 38,
-      media: [{ _id: '4', secure_url: '/placeholder.png', alt: 'Islamic Wall Frame', title: 'Frame 4' }],
+      media: [{ _id: '4', secure_url: '/assets/images/advertising-banner.png', alt: 'Islamic Wall Frame', title: 'Frame 4' }],
       category: { _id: '1', name: 'Wall Frames', slug: 'wall-frames' },
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
