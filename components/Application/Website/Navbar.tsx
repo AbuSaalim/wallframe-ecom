@@ -110,8 +110,8 @@ export default function Navbar() {
                 <>
                   <Button asChild variant="outline" size="sm">
                     <Link href="/my-account">
-                      <User className="h-4 w-4 mr-2" />
-                      Account
+                      <User className="h-4 w-4" />
+                      
                     </Link>
                   </Button>
                   <Button variant="ghost" size="sm" onClick={handleLogout} disabled={loggingOut} title="Logout">

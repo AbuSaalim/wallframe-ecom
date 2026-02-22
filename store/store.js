@@ -4,10 +4,14 @@ import persistStore from "redux-persist/es/persistStore"
 import localStorage from "redux-persist/es/storage"
 import authReducer from "./reducer/authReducer"
 import cartReducer from "./reducer/cartStore"
+// 👇 1. Yahan wishlist reducer ko import kiya
+import wishlistReducer from "./reducer/wishlistReducer" 
 
 const rootReducer = combineReducers({
     authStore: authReducer,
-    cartStore: cartReducer
+    cartStore: cartReducer,
+    // 👇 2. Yahan rootReducer mein add kar diya
+    wishlistStore: wishlistReducer 
 })
 
 const persistConfig = { 
@@ -18,7 +22,7 @@ const persistConfig = {
 const persistedReducer = persistReducer(persistConfig, rootReducer)
 
 export const store = configureStore({
-    reducer: persistedReducer, // Change from persistReducer to persistedReducer
+    reducer: persistedReducer, 
     middleware: (getDefaultMiddleware) => 
         getDefaultMiddleware({
             serializableCheck: {
@@ -27,4 +31,4 @@ export const store = configureStore({
         })
 })
 
-export const persistor = persistStore(store) // Change from false to store
+export const persistor = persistStore(store)

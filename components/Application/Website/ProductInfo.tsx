@@ -6,9 +6,10 @@ import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { Heart, Share2, Star, Truck, ShieldCheck } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { addToCart } from '@/store/reducer/cartStore'
-import { generateCartItemId } from '@/lib/cart/localStorage'
+// 👇 1. Wishlist action import kiya
+import { toggleWishlist } from '@/store/reducer/wishlistReducer'
 import { toast } from 'react-toastify'
 
 interface ProductInfoProps {
@@ -19,6 +20,10 @@ interface ProductInfoProps {
 
 export default function ProductInfo({ product, variants, onVariantChange }: ProductInfoProps) {
   const dispatch = useDispatch()
+  
+  // 👇 2. Wishlist State Check karna
+  const wishlistItems = useSelector((store: any) => store.wishlistStore?.items || [])
+  const isWishlisted = wishlistItems.some((item: any) => item._id === product._id)
   
   // Extract unique colors and sizes
   const uniqueColors = Array.from(new Set(variants.map(v => v.color))).filter(Boolean)
@@ -116,10 +121,9 @@ export default function ProductInfo({ product, variants, onVariantChange }: Prod
                     "w-10 h-10 rounded-full border-2 transition-all flex items-center justify-center",
                     selectedColor === color ? "border-primary scale-110" : "border-transparent hover:border-gray-200"
                   )}
-                  style={{ backgroundColor: color.toLowerCase() }} // Assuming color names are valid CSS colors, fallback needed?
+                  style={{ backgroundColor: color.toLowerCase() }} 
                   title={color}
                 >
-                    {/* Fallback if color isn't valid CSS, maybe just show text or map? For now assume valid */}
                     <span className="sr-only">{color}</span>
                     {selectedColor === color && <span className="block w-2.5 h-2.5 bg-white rounded-full shadow-sm" />}
                 </button>
@@ -167,10 +171,21 @@ export default function ProductInfo({ product, variants, onVariantChange }: Prod
         >
           {currentVariant ? 'Add to Cart' : 'Unavailable'}
         </Button>
-        <Button size="lg" variant="outline" className="h-12 w-12 rounded-full p-0">
-          <Heart className="w-5 h-5" />
+        
+        {/* 👇 3. Updated Heart Button */}
+        <Button 
+          size="lg" 
+          variant="outline" 
+          className={cn(
+            "h-12 w-12 rounded-full p-0 transition-colors duration-300",
+            isWishlisted ? "bg-red-50 border-red-200 text-red-500 hover:bg-red-100 hover:text-red-600" : "hover:text-red-500 hover:bg-gray-50 hover:border-red-200"
+          )}
+          onClick={() => dispatch(toggleWishlist(product))}
+        >
+          <Heart className={cn("w-5 h-5", isWishlisted && "fill-current")} />
         </Button>
-        <Button size="lg" variant="outline" className="h-12 w-12 rounded-full p-0">
+
+        <Button size="lg" variant="outline" className="h-12 w-12 rounded-full p-0 hover:bg-gray-50 hover:text-primary transition-colors">
           <Share2 className="w-5 h-5" />
         </Button>
       </div>
@@ -197,7 +212,6 @@ export default function ProductInfo({ product, variants, onVariantChange }: Prod
       <div className="mt-6">
         <h3 className="font-medium text-gray-900 mb-2">Description</h3>
         <div className="prose prose-sm text-gray-500" dangerouslySetInnerHTML={{ __html: product.description }} /> 
-        {/* Assuming description might be HTML from rich text editor? If not just render text */}
       </div>
 
     </div>
