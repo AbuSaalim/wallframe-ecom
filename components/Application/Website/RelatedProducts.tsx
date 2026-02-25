@@ -26,13 +26,13 @@ export default function RelatedProducts({ categoryId, currentProductId }: Relate
         setLoading(true)
         const catId = typeof categoryId === 'object' ? categoryId._id : categoryId;
         
-        // API hit kar rahe hain
-        const response = await axios.get(`/api/public/products?category=${catId}`)
+        // 🛑 BUG FIXED: Wapas 'products' kar diya (404 error hatane ke liye)
+        // Sath hi hum param hata rahe hain taaki saare products aayein aur hum yahan filter karein
+        const apiUrl = `/api/public/products` 
         
-        // 🛑 Console mein data dhyaan se dekhne ke liye
-        console.log("👉 2. FULL API RESPONSE:", response.data)
+        const response = await axios.get(apiUrl)
 
-        // 🧠 Smart Array Extractor (Har tarah ke backend response ko handle karne ke liye)
+        // Smart Array Extractor
         let fetchedData = [];
         if (Array.isArray(response.data)) {
             fetchedData = response.data;
@@ -43,14 +43,16 @@ export default function RelatedProducts({ categoryId, currentProductId }: Relate
         } else if (response.data?.data?.products && Array.isArray(response.data.data.products)) {
             fetchedData = response.data.data.products;
         }
-
-        console.log("👉 3. EXTRACTED ARRAY:", fetchedData)
         
         if (fetchedData.length > 0) {
-          // Current product ko remove karo
-          const filteredProducts = fetchedData.filter(
-            (p: Product) => p._id !== currentProductId
-          )
+          // 🔥 MAGIC HERE: Frontend par category filter aur current product hide kar rahe hain
+          const filteredProducts = fetchedData.filter((p: Product) => {
+            // Category ID match karo
+            const productCatId = typeof p.category === 'object' ? p.category?._id : p.category;
+            // Agar category match ho AND wo current product na ho, tabhi dikhao
+            return productCatId === catId && p._id !== currentProductId;
+          });
+
           setProducts(filteredProducts.slice(0, 4))
         }
       } catch (error) {
@@ -71,15 +73,10 @@ export default function RelatedProducts({ categoryId, currentProductId }: Relate
     )
   }
 
-  // ⚠️ TEMPORARY DEBUG MESSAGE (Jab error solve ho jaye toh isko wapas 'return null' kar dena)
-  // if (!loading && products.length === 0) {
-  //   return (
-  //      <div className="text-center py-10 bg-gray-50 border border-dashed border-gray-300 rounded-lg mx-4">
-  //        <p className="text-gray-500 font-medium">Bhai, is category mein aur koi product database mein nahi hai.</p>
-  //        <p className="text-xs text-gray-400 mt-2">Category ID: {typeof categoryId === 'object' ? categoryId._id : categoryId}</p>
-  //      </div>
-  //   ); 
-  // }
+  // Agar category filter hone ke baad koi product nahi bacha, toh hide kar do
+  if (products.length === 0) {
+    return null; 
+  }
 
   return (
     <div className="w-full">

@@ -8,16 +8,18 @@ import { Heart, ShoppingBag, Star, ChevronLeft, ChevronRight } from 'lucide-reac
 import { Product } from '@/types/product'
 import { Button } from '@/components/ui/button'
 
-// 👇 1. Redux aur Wishlist action import kiya
 import { useDispatch, useSelector } from 'react-redux'
 import { toggleWishlist } from '@/store/reducer/wishlistReducer'
+// 👇 1. Cart Actions aur Toast Import kiye
+import { addToCart, toggleDrawer } from '@/store/reducer/cartStore'
+import { toast } from 'react-toastify'
 
 interface ProductCardProps {
   product: Product
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
-  // --- Wishlist Logic Setup ---
+  // --- Redux Logic Setup ---
   const dispatch = useDispatch()
   const wishlistItems = useSelector((store: any) => store.wishlistStore?.items || [])
   const isWishlisted = wishlistItems.some((item: any) => item._id === product._id)
@@ -27,7 +29,6 @@ export default function ProductCard({ product }: ProductCardProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isHovered, setIsHovered] = useState(false)
   
-  // Dragging States for Mouse Swipe
   const [isDown, setIsDown] = useState(false)
   const [startX, setStartX] = useState(0)
   const [scrollLeft, setScrollLeft] = useState(0)
@@ -37,7 +38,34 @@ export default function ProductCard({ product }: ProductCardProps) {
   const hasMultipleImages = product.media && product.media.length > 1
   const hasDiscount = product.discountPercentage > 0
 
-  // 1. Scroll Position ke hisab se Dots update karna
+  // 👇 2. Add To Cart Function Banaya
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault() // Link open hone se rokne ke liye
+    e.stopPropagation() // Slider move rokne ke liye
+
+    const cartItem = {
+      productId: product._id,
+      productSlug: product.slug,
+      variantId: null, // Quick add mein hum default product bhej rahe hain
+      name: product.name,
+      image: product.media?.[0]?.secure_url || '/assets/images/placeholder-product.jpg',
+      color: null,
+      size: null,
+      price: product.sellingPrice,
+      quantity: 1,
+      stock: product.stock || 10
+    }
+
+    // Product Cart mein daalo
+    dispatch(addToCart(cartItem))
+    
+    // Success Message dikhao
+    toast.success(`${product.name} added to cart!`)
+    
+    // Cart Drawer Open karo taaki user ko dikhe
+    dispatch(toggleDrawer(true))
+  }
+
   const handleScroll = () => {
     if (!sliderRef.current) return
     const width = sliderRef.current.clientWidth
@@ -48,7 +76,6 @@ export default function ProductCard({ product }: ProductCardProps) {
     }
   }
 
-  // 2. Arrows Logic
   const scrollToIndex = (index: number) => {
     if (!sliderRef.current) return
     const width = sliderRef.current.clientWidth
@@ -56,7 +83,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   }
 
   const nextSlide = (e: React.MouseEvent) => {
-    e.preventDefault() // Link click rokne ke liye
+    e.preventDefault()
     e.stopPropagation()
     const next = (currentIndex + 1) % product.media.length
     scrollToIndex(next)
@@ -69,7 +96,6 @@ export default function ProductCard({ product }: ProductCardProps) {
     scrollToIndex(prev)
   }
 
-  // 3. Auto-play Logic (Hover ya Drag karne par ruk jayega)
   useEffect(() => {
     let timer: NodeJS.Timeout
     if (hasMultipleImages && !isHovered && !isDown) {
@@ -83,7 +109,6 @@ export default function ProductCard({ product }: ProductCardProps) {
     return () => clearInterval(timer)
   }, [hasMultipleImages, currentIndex, isHovered, isDown, product.media?.length])
 
-  // 4. Mouse Drag Logic (Desktop Slide Feature)
   const startDrag = (e: React.MouseEvent) => {
     setIsDown(true)
     setHasDragged(false)
@@ -99,12 +124,11 @@ export default function ProductCard({ product }: ProductCardProps) {
     if (!isDown) return
     e.preventDefault()
     const x = e.pageX - sliderRef.current!.offsetLeft
-    const walk = (x - startX) * 1.5 // Scroll ki speed
-    if (Math.abs(walk) > 5) setHasDragged(true) // Agar thoda sa bhi hila toh click roko
+    const walk = (x - startX) * 1.5 
+    if (Math.abs(walk) > 5) setHasDragged(true) 
     sliderRef.current!.scrollLeft = scrollLeft - walk
   }
 
-  // Agar drag kiya hai toh Link click na ho, warna link khul jaye
   const handleLinkClick = (e: React.MouseEvent) => {
     if (hasDragged) {
       e.preventDefault()
@@ -123,10 +147,8 @@ export default function ProductCard({ product }: ProductCardProps) {
       }}
       className="group flex flex-col w-full bg-white cursor-pointer relative"
     >
-      {/* Image Container */}
       <div className="relative aspect-[4/5] w-full overflow-hidden bg-gray-50 rounded-sm">
         
-        {/* Swiper / Scroll Container */}
         <div 
           ref={sliderRef}
           onScroll={handleScroll}
@@ -134,7 +156,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           onMouseUp={stopDrag}
           onMouseMove={onDrag}
           className="flex w-full h-full overflow-x-auto snap-x snap-mandatory cursor-grab active:cursor-grabbing"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }} // Hide scrollbar
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }} 
         >
           {hasMedia ? (
             product.media.map((img, index) => (
@@ -144,7 +166,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                     src={img.secure_url}
                     alt={img.alt || product.name}
                     fill
-                    draggable={false} // Image ghosting rokne ke liye
+                    draggable={false} 
                     className="object-cover select-none"
                     sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
                   />
@@ -165,7 +187,6 @@ export default function ProductCard({ product }: ProductCardProps) {
           )}
         </div>
         
-        {/* Navigation Arrows (Hover par dikhenge) */}
         {hasMultipleImages && (
           <>
             <button 
@@ -183,7 +204,6 @@ export default function ProductCard({ product }: ProductCardProps) {
           </>
         )}
 
-        {/* Badges */}
         <div className="absolute top-3 left-3 flex flex-col gap-1 z-20 pointer-events-none">
           {hasDiscount && (
             <span className="bg-white/90 backdrop-blur-sm text-red-600 border border-red-100 text-[10px] uppercase font-bold px-2 py-1 tracking-widest rounded-sm shadow-sm">
@@ -192,11 +212,10 @@ export default function ProductCard({ product }: ProductCardProps) {
           )}
         </div>
 
-        {/* 👇 2. Updated Wishlist Button */}
         <button 
           onClick={(e) => {
-            e.preventDefault() // Link click na ho
-            e.stopPropagation() // Slider move na ho
+            e.preventDefault() 
+            e.stopPropagation() 
             dispatch(toggleWishlist(product))
           }}
           className={`absolute top-3 right-3 z-20 p-2 rounded-full transition-all duration-300 transform translate-x-2 group-hover:translate-x-0 shadow-sm
@@ -206,7 +225,6 @@ export default function ProductCard({ product }: ProductCardProps) {
           <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-red-500' : ''}`} />
         </button>
 
-        {/* Progress Dots */}
         {hasMultipleImages && (
           <div className="absolute bottom-4 left-0 right-0 z-20 flex justify-center gap-1.5 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
             {product.media.map((_, index) => (
@@ -220,16 +238,18 @@ export default function ProductCard({ product }: ProductCardProps) {
           </div>
         )}
 
-        {/* Slide-up Quick Add Bar */}
+        {/* 👇 3. Quick Add Button Update (onClick lagaya) */}
         <div className="absolute bottom-0 left-0 right-0 p-3 z-20 translate-y-full group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-300 ease-out bg-gradient-to-t from-black/40 to-transparent flex justify-center">
-           <Button className="w-full bg-white text-black hover:bg-black hover:text-white rounded-sm font-medium tracking-wide shadow-lg transition-colors h-10">
+           <Button 
+             onClick={handleAddToCart}
+             className="w-full bg-white text-black hover:bg-black hover:text-white rounded-sm font-medium tracking-wide shadow-lg transition-colors h-10"
+           >
               <ShoppingBag className="w-4 h-4 mr-2" />
               Quick Add
            </Button>
         </div>
       </div>
 
-      {/* Details Section */}
       <div className="pt-4 pb-2 flex flex-col gap-1 px-1">
         <div className="flex justify-between items-center">
           <div className="text-[10px] text-gray-500 uppercase tracking-widest">
